@@ -12,7 +12,7 @@ const eventRooms = new Map();
 export function initializeSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: true, // Reflect origin
       methods: ['GET', 'POST'],
       credentials: true
     },
@@ -31,7 +31,7 @@ export function initializeSocket(server) {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
       socket.user = decoded;
       next();
     } catch (error) {

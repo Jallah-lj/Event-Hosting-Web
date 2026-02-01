@@ -43,25 +43,25 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50 p-4 md:p-6">
+      <nav className="absolute top-0 left-0 right-0 z-50 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-lg font-serif font-bold text-liberia-blue text-sm md:text-base">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-lg font-serif font-bold text-liberia-blue text-sm sm:text-base">
               LC
             </div>
-            <span className="font-serif text-lg md:text-xl font-bold text-white hidden sm:block shadow-sm">LiberiaConnect</span>
+            <span className="font-serif text-base sm:text-lg md:text-xl font-bold text-white hidden xs:block shadow-sm">LiberiaConnect</span>
           </div>
-          <div className="flex space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-4">
             <Link 
               to="/auth/signin"
-              className="text-white font-medium hover:text-blue-200 transition-colors text-sm md:text-base px-3 py-1"
+              className="text-white font-medium hover:text-blue-200 transition-colors text-xs sm:text-sm md:text-base px-2 sm:px-3 py-1"
             >
               Sign In
             </Link>
             <Button 
               variant="primary" 
               size="sm" 
-              className="bg-white text-liberia-blue hover:bg-blue-50 border-none shadow-lg text-xs md:text-sm font-bold"
+              className="bg-white text-liberia-blue hover:bg-blue-50 border-none shadow-lg text-[10px] sm:text-xs md:text-sm font-bold px-3 py-1"
               onClick={() => navigate('/auth/signup')}
             >
               Register
@@ -71,17 +71,17 @@ const LandingPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <header className="bg-liberia-blue relative overflow-hidden text-white pt-24 pb-16 lg:pb-24 lg:pt-32">
+      <header className="bg-liberia-blue relative overflow-hidden text-white pt-28 pb-16 sm:pt-32 sm:pb-24 lg:pt-40 lg:pb-32">
         <div className="absolute inset-0 bg-liberia-red opacity-10 pattern-bg mix-blend-multiply"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold tracking-tight mb-6 leading-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif font-bold tracking-tight mb-4 sm:mb-6 leading-tight">
             LiberiaConnect <span className="text-red-400 block sm:inline">Events</span>
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-blue-100 max-w-2xl mb-10 mx-auto">
+          <p className="text-base sm:text-xl md:text-2xl text-blue-100 max-w-2xl mb-8 sm:mb-10 mx-auto px-2">
             The premier platform for celebrating culture, fostering business, and building community across the nation.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4 sm:px-0">
-            <Button size="lg" className="shadow-xl w-full sm:w-auto justify-center" onClick={() => {
+          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none sm:w-auto px-4 sm:px-0">
+            <Button size="lg" className="shadow-xl w-full sm:w-auto justify-center py-3 sm:py-4 px-8 sm:px-10" onClick={() => {
               document.getElementById('upcoming-events')?.scrollIntoView({ behavior: 'smooth' });
             }}>
               Browse Events
@@ -91,19 +91,19 @@ const LandingPage: React.FC = () => {
       </header>
 
       {/* Public Events Grid */}
-      <section id="upcoming-events" className="py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-end mb-8 md:mb-10 gap-4">
+      <section id="upcoming-events" className="py-12 sm:py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center sm:items-end mb-8 md:mb-10 gap-4">
           <div className="text-center sm:text-left w-full sm:w-auto">
-            <h2 className="text-3xl font-serif font-bold text-gray-900">Upcoming Events</h2>
-            <p className="text-gray-500 mt-2">Discover what's happening in Liberia</p>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900">Upcoming Events</h2>
+            <p className="text-sm sm:text-base text-gray-500 mt-2">Discover what's happening in Liberia</p>
           </div>
-          <Link to="/auth/signup" className="hidden md:flex items-center text-liberia-red font-medium hover:text-red-800 transition-colors">
+          <Link to="/auth/signup" className="hidden sm:flex items-center text-liberia-red font-medium hover:text-red-800 transition-colors">
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
                 <div className="h-48 bg-gray-200" />
@@ -116,7 +116,7 @@ const LandingPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {events.map(event => (
               <Link 
                 key={event.id}
@@ -174,12 +174,12 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Feature Section */}
-      <section className="py-16 md:py-20 bg-white border-t border-gray-100">
+      <section className="py-12 sm:py-16 md:py-20 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl font-serif font-bold text-gray-900">Why choose LiberiaConnect?</h2>
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-gray-900">Why choose LiberiaConnect?</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12 text-center">
             <div className="p-6 bg-gray-50 rounded-2xl md:bg-transparent md:p-0">
               <div className="w-12 h-12 bg-red-100 text-liberia-red rounded-xl flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

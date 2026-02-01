@@ -272,17 +272,17 @@ const EventDetails: React.FC = () => {
       </div>
 
       {/* Fixed Purchase Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-4 z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <div className="text-sm text-gray-500">Total</div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-4 z-50 pb-safe">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-xs sm:text-sm text-gray-500">Total</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
               ${totalPrice.toFixed(2)}
             </div>
           </div>
-          <Button onClick={handlePurchase} isLoading={purchasing} size="lg">
-            <Ticket className="w-5 h-5 mr-2" />
-            Get Tickets
+          <Button onClick={handlePurchase} isLoading={purchasing} size="lg" className="flex-1 sm:flex-none">
+            <Ticket className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="whitespace-nowrap">Get Tickets</span>
           </Button>
         </div>
       </div>

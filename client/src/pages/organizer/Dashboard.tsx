@@ -139,58 +139,6 @@ const OrganizerDashboard: React.FC = () => {
       {/* Profile & Security */}
       <ProfileSecurityPanel />
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        {/* All Attendees Panel: attendee management only */}
-        <Link
-          to="/organizer/attendees"
-          className="bg-white dark:bg-blue-950 rounded-xl border-2 border-blue-200 dark:border-blue-800 p-5 hover:shadow-lg transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-              <Users className="w-7 h-7 text-blue-700 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <h3 className="font-bold text-blue-900 dark:text-blue-100">All Attendees</h3>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Manage attendee lists, search, filter, export</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Scan Tickets Panel: ticket scanning only, visually distinct */}
-        <Link
-          to="/organizer/scanner"
-          className="bg-green-50 dark:bg-green-950 rounded-xl border-2 border-green-200 dark:border-green-800 p-5 hover:shadow-lg transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-green-200 dark:bg-green-900 flex items-center justify-center group-hover:bg-green-600 transition-colors">
-              <ScanLine className="w-7 h-7 text-green-700 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <h3 className="font-bold text-green-900 dark:text-green-100">Scan Tickets</h3>
-              <p className="text-sm text-green-700 dark:text-green-300">Real-time QR scanning, check-in, validation feedback</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Create Event Panel */}
-        <Link
-          to="/organizer/create"
-          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:border-purple-500 dark:hover:border-purple-500 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:bg-purple-500 transition-colors">
-              <Plus className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 dark:text-white">Create Event</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Set up a new event</p>
-            </div>
-          </div>
-        </Link>
-      </div>
-
       {/* Events List */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
         <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center">

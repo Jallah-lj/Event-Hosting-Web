@@ -207,7 +207,7 @@ const AdminFinance: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Event
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -227,7 +227,7 @@ const AdminFinance: React.FC = () => {
                     <td className="px-4 py-4">
                       <div className="font-medium text-gray-900 dark:text-white">{transaction.userName}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    <td className="hidden sm:table-cell px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
                       {transaction.eventTitle}
                     </td>
                     <td className="px-4 py-4">
