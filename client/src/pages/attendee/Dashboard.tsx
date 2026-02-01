@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Calendar, MapPin, Search, Filter, ArrowRight,
   Ticket as TicketIcon, Clock, TrendingUp, Sparkles,
-  ChevronRight, Bookmark
+  ChevronRight, Bookmark, QrCode
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useToast } from '../../components/Toast';

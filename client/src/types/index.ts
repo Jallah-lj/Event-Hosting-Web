@@ -136,6 +136,7 @@ export interface Ticket {
     location: string;
     imageUrl?: string;
     organizerName?: string;
+    category?: string;
     sponsors?: Sponsor[];
   };
 }
