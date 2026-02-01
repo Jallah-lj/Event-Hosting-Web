@@ -1,6 +1,10 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
-const API_BASE_URL = (import.meta as any).env.VITE_API_URL || '/api';
+// Use environment variable, or fallback to production URL, or local development
+const API_BASE_URL = (import.meta as any).env.VITE_API_URL
+  || (window.location.hostname !== 'localhost'
+    ? 'https://event-hosting-web.onrender.com/api'
+    : '/api');
 
 // Create axios instance
 const api = axios.create({
