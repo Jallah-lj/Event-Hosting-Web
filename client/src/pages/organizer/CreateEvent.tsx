@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Clock, User, Building2, HelpCircle,
-  Tag, Globe, Facebook, Twitter, Instagram, Linkedin,
-  Percent, Calendar, Users, Eye, Save, X, ChevronDown, ChevronUp,
-  TriangleAlert, CircleCheck, CircleX
+  ArrowLeft, Plus, Trash2, Clock, Tag, Globe, X, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -55,9 +52,9 @@ const CreateEvent: React.FC = () => {
   const isEditing = !!id;
 
   const [loading, setLoading] = useState(false);
-  const [savingDraft, setSavingDraft] = useState(false);
+  // const [savingDraft, setSavingDraft] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditing);
-  const [showPreview, setShowPreview] = useState(false);
+  // const [showPreview, setShowPreview] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     schedule: false,
     speakers: false,
@@ -183,6 +180,7 @@ const CreateEvent: React.FC = () => {
     setSchedule(schedule.map(s => s.id === id ? { ...s, [field]: value } : s));
   };
 
+  /* Unused functions for now
   const addSpeaker = () => {
     setSpeakers([...speakers, { id: generateId(), name: '', role: '', bio: '', imageUrl: '' }]);
   };
@@ -221,6 +219,7 @@ const CreateEvent: React.FC = () => {
   const updatePromoCode = (id: string, field: keyof PromoCode, value: any) => {
     setPromoCodes(promoCodes.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
+  */
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
@@ -240,7 +239,7 @@ const CreateEvent: React.FC = () => {
       return;
     }
 
-    isDraft ? setSavingDraft(true) : setLoading(true);
+    isDraft ? console.log('Saving draft...') : setLoading(true); // setSavingDraft(true)
     try {
       const eventData = {
         ...formData,
@@ -272,7 +271,7 @@ const CreateEvent: React.FC = () => {
       addToast(getErrorMessage(error), 'error');
     } finally {
       setLoading(false);
-      setSavingDraft(false);
+      // setSavingDraft(false);
     }
   };
 

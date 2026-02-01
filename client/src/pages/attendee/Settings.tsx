@@ -241,9 +241,9 @@ const AttendeeSettings: React.FC = () => {
                 accept="image/*"
                 className="hidden"
               />
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
               >
@@ -540,7 +540,10 @@ const AttendeeSettings: React.FC = () => {
               checked={localPrefs.privacy?.profileVisible ?? true}
               onChange={(e) => setLocalPrefs({
                 ...localPrefs,
-                privacy: { ...localPrefs.privacy, profileVisible: e.target.checked }
+                privacy: {
+                  showAttendance: localPrefs.privacy?.showAttendance ?? true,
+                  profileVisible: e.target.checked
+                }
               })}
               className="w-5 h-5 text-liberia-blue rounded"
             />
@@ -556,7 +559,10 @@ const AttendeeSettings: React.FC = () => {
               checked={localPrefs.privacy?.showAttendance ?? true}
               onChange={(e) => setLocalPrefs({
                 ...localPrefs,
-                privacy: { ...localPrefs.privacy, showAttendance: e.target.checked }
+                privacy: {
+                  profileVisible: localPrefs.privacy?.profileVisible ?? true,
+                  showAttendance: e.target.checked
+                }
               })}
               className="w-5 h-5 text-liberia-blue rounded"
             />
@@ -634,9 +640,9 @@ const AttendeeSettings: React.FC = () => {
                 className="w-full px-4 py-2 border border-red-300 rounded-lg mb-3 bg-white dark:bg-gray-800"
               />
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
                 >
                   Cancel

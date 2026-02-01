@@ -38,10 +38,10 @@ const AttendeeTickets: React.FC = () => {
   const handleDownloadPDF = async (ticket: Ticket) => {
     setPreviewTicket(ticket);
     setDownloading(true);
-    
+
     // Wait for component to render
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     try {
       if (!printRef.current) {
         throw new Error('Print container not found');
@@ -56,7 +56,7 @@ const AttendeeTickets: React.FC = () => {
       });
 
       const imgData = canvas.toDataURL('image/png');
-      
+
       // Create PDF in landscape for better ticket layout
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -65,10 +65,10 @@ const AttendeeTickets: React.FC = () => {
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-      
+
       const eventName = ticket.event?.title?.substring(0, 20).replace(/\s+/g, '_') || 'Event';
       pdf.save(`${eventName}_Ticket_${ticket.id.substring(0, 8)}.pdf`);
-      
+
       addToast('Ticket downloaded as PDF!', 'success');
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -81,37 +81,14 @@ const AttendeeTickets: React.FC = () => {
 
   const handlePrintTicket = async (ticket: Ticket) => {
     setPreviewTicket(ticket);
-    
+
     // Wait for component to render
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     window.print();
   };
 
-  const handleDownloadTicket = (ticket: Ticket) => {
-    // Create a simple text receipt as fallback
-    const receipt = `
-LiberiaConnect Events - Ticket
 
-Event: ${ticket.event?.title || 'Event'}
-Date: ${ticket.event?.date ? new Date(ticket.event.date).toLocaleString() : 'TBD'}
-Location: ${ticket.event?.location || 'TBD'}
-Ticket Type: ${ticket.tierName || 'Standard'}
-Ticket ID: ${ticket.id}
-Status: ${ticket.used ? 'USED' : 'VALID'}
-
-Present this ticket at the venue for entry.
-    `.trim();
-
-    const blob = new Blob([receipt], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ticket-${ticket.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    addToast('Ticket downloaded', 'success');
-  };
 
   if (loading) {
     return (
@@ -146,10 +123,10 @@ Present this ticket at the venue for entry.
           {tickets.map(ticket => (
             <div
               key={ticket.id}
-              className={`bg-white dark:bg-gray-800 rounded-xl overflow-hidden border ${ticket.used
+              className={`bg - white dark: bg - gray - 800 rounded - xl overflow - hidden border ${ticket.used
                   ? 'border-gray-200 dark:border-gray-700 opacity-60'
                   : 'border-green-200 dark:border-green-800'
-                }`}
+                } `}
             >
               <div className="relative h-24 sm:h-32 bg-gray-100 dark:bg-gray-700">
                 {ticket.event?.imageUrl ? (
@@ -173,10 +150,10 @@ Present this ticket at the venue for entry.
                     </h3>
                   </div>
                 </div>
-                <span className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${ticket.used
+                <span className={`absolute top - 2 right - 2 px - 2 py - 1 rounded - full text - xs font - bold uppercase tracking - wider ${ticket.used
                     ? 'bg-gray-100 text-gray-600'
                     : 'bg-green-100 text-green-700'
-                  }`}>
+                  } `}>
                   {ticket.used ? 'Used' : 'Valid'}
                 </span>
               </div>
@@ -370,22 +347,22 @@ Present this ticket at the venue for entry.
 
       {/* Print Styles */}
       <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .printable-ticket,
-          .printable-ticket * {
-            visibility: visible;
-          }
-          .printable-ticket {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}</style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+      .printable - ticket,
+          .printable - ticket * {
+        visibility: visible;
+      }
+        .printable - ticket {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100 %;
+    }
+  }
+  `}</style>
     </div>
   );
 };

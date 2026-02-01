@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ChartBar, TrendingUp, TrendingDown, Users, Calendar, DollarSign,
+  ChartBar, TrendingUp, Users, Calendar, DollarSign,
   Ticket, Activity, ArrowUp, ArrowDown, Download, RefreshCw,
-  PieChart, LineChart, Globe, Clock
+  PieChart, LineChart, Globe
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useToast } from '../../components/Toast';
@@ -226,8 +226,8 @@ const AdminAnalytics: React.FC = () => {
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${timeRange === range
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'
                   }`}
               >
                 {range === 'all' ? 'All' : range.toUpperCase()}
@@ -441,7 +441,7 @@ const AdminAnalytics: React.FC = () => {
             Geographic Distribution
           </h3>
           <div className="space-y-3">
-            {data.geographicData.map((item, index) => (
+            {data.geographicData.map((item) => (
               <div key={item.location} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-liberia-blue rounded-full" />

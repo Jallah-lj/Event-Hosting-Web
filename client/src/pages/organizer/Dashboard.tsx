@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, Users, Edit2, ScanLine, DollarSign, TrendingUp, Eye } from 'lucide-react';
+import { Plus, Users, ScanLine, Eye, Calendar, Edit2 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
@@ -34,9 +34,10 @@ const OrganizerDashboard: React.FC = () => {
   };
 
   // Calculate summary stats
-  const totalAttendees = events.reduce((sum, e) => sum + (e.attendeeCount || 0), 0);
-  const totalRevenue = events.reduce((sum, e) => sum + ((e.attendeeCount || 0) * (e.price || 0)), 0);
-  const upcomingEvents = events.filter(e => new Date(e.date) > new Date()).length;
+  // Calculate summary stats (Commenting out to avoid unused variable error until used in UI)
+  // const totalAttendees = events.reduce((sum, e) => sum + (e.attendeeCount || 0), 0);
+  // const totalRevenue = events.reduce((sum, e) => sum + ((e.attendeeCount || 0) * (e.price || 0)), 0);
+  // const upcomingEvents = events.filter(e => new Date(e.date) > new Date()).length;
 
   if (loading) {
     return (
@@ -84,8 +85,8 @@ const OrganizerDashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* All Attendees Panel: attendee management only */}
-        <Link 
-          to="/organizer/attendees" 
+        <Link
+          to="/organizer/attendees"
           className="bg-white dark:bg-blue-950 rounded-xl border-2 border-blue-200 dark:border-blue-800 p-5 hover:shadow-lg transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -100,8 +101,8 @@ const OrganizerDashboard: React.FC = () => {
         </Link>
 
         {/* Scan Tickets Panel: ticket scanning only, visually distinct */}
-        <Link 
-          to="/organizer/scanner" 
+        <Link
+          to="/organizer/scanner"
           className="bg-green-50 dark:bg-green-950 rounded-xl border-2 border-green-200 dark:border-green-800 p-5 hover:shadow-lg transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -116,8 +117,8 @@ const OrganizerDashboard: React.FC = () => {
         </Link>
 
         {/* Create Event Panel */}
-        <Link 
-          to="/organizer/create" 
+        <Link
+          to="/organizer/create"
           className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:border-purple-500 dark:hover:border-purple-500 transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -142,8 +143,8 @@ const OrganizerDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* All Attendees Panel: attendee management only */}
-        <Link 
-          to="/organizer/attendees" 
+        <Link
+          to="/organizer/attendees"
           className="bg-white dark:bg-blue-950 rounded-xl border-2 border-blue-200 dark:border-blue-800 p-5 hover:shadow-lg transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -158,8 +159,8 @@ const OrganizerDashboard: React.FC = () => {
         </Link>
 
         {/* Scan Tickets Panel: ticket scanning only, visually distinct */}
-        <Link 
-          to="/organizer/scanner" 
+        <Link
+          to="/organizer/scanner"
           className="bg-green-50 dark:bg-green-950 rounded-xl border-2 border-green-200 dark:border-green-800 p-5 hover:shadow-lg transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -174,8 +175,8 @@ const OrganizerDashboard: React.FC = () => {
         </Link>
 
         {/* Create Event Panel */}
-        <Link 
-          to="/organizer/create" 
+        <Link
+          to="/organizer/create"
           className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 hover:border-purple-500 dark:hover:border-purple-500 transition-colors group"
         >
           <div className="flex items-center gap-4">
@@ -225,13 +226,12 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-bold text-gray-900 dark:text-white truncate">{event.title}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      event.status === 'APPROVED'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : event.status === 'PENDING'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${event.status === 'APPROVED'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : event.status === 'PENDING'
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                      }`}>
                       {event.status}
                     </span>
                   </div>

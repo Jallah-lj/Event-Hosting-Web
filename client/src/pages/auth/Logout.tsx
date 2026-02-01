@@ -4,15 +4,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import AnimatedBackground from '../../components/AnimatedBackground';
 
 const Logout: React.FC = () => {
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    signOut();
+    logout();
     setTimeout(() => {
       navigate('/auth/signin');
     }, 1500);
-  }, [signOut, navigate]);
+  }, [logout, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-liberia-blue via-blue-200 to-liberia-red/30 relative overflow-hidden">

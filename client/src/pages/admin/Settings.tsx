@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Save, Globe, DollarSign, Shield, Bell, Mail, Palette,
-  Database, FileText, Lock, Clock, Upload, Download,
-  TriangleAlert, CircleCheck, Key, Eye, EyeOff
+  Database, FileText, Clock, Upload, Download,
+  TriangleAlert, Key, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useToast } from '../../components/Toast';
@@ -223,8 +223,8 @@ const AdminSettings: React.FC = () => {
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${activeSection === section.id
-                    ? 'bg-liberia-blue text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-liberia-blue text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
               >
                 <section.icon className="w-5 h-5" />
@@ -670,12 +670,13 @@ const AdminSettings: React.FC = () => {
                         className="hidden"
                         id="logo-upload"
                       />
-                      <label htmlFor="logo-upload">
-                        <Button variant="secondary" as="span" className="cursor-pointer">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload Logo
-                        </Button>
-                      </label>
+                      <Button
+                        variant="secondary"
+                        onClick={() => document.getElementById('logo-upload')?.click()}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Logo
+                      </Button>
                       <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB. Recommended 200x200px</p>
                     </div>
                   </div>
@@ -949,7 +950,7 @@ const AdminSettings: React.FC = () => {
                 {/* Danger Zone */}
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                   <h3 className="font-medium text-red-800 dark:text-red-200 mb-2 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" />
+                    <TriangleAlert className="w-4 h-4" />
                     Danger Zone
                   </h3>
                   <p className="text-sm text-red-600 dark:text-red-300 mb-4">

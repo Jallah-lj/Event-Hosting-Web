@@ -112,7 +112,7 @@ const SignUp: React.FC = () => {
                 className="pl-10 block w-full border-gray-300 rounded-md focus:ring-liberia-blue focus:border-liberia-blue shadow-sm py-2 border"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.g.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>

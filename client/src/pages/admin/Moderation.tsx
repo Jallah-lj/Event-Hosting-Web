@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Flag, TriangleAlert, CircleCheck, CircleX, Eye, MessageSquare, Calendar, User, Search, Filter, Clock, Shield, Ban } from 'lucide-react';
+import { Flag, TriangleAlert, CircleCheck, CircleX, Eye, MessageSquare, Calendar, User, Search, Clock, Shield, Ban } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useToast } from '../../components/Toast';
 import api, { getErrorMessage } from '../../services/api';
@@ -120,7 +121,7 @@ const AdminModeration: React.FC = () => {
           ? { ...r, status: action === 'resolve' ? 'RESOLVED' : 'DISMISSED', resolution: resolutionNote }
           : r
       ));
-      addToast(`Report ${action === 'resolve' ? 'resolved' : 'dismissed'}`, 'success');
+      addToast(`Report ${action === 'resolve' ? 'resolved' : 'dismissed'} `, 'success');
       setSelectedReport(null);
       setResolutionNote('');
     } catch (error) {
@@ -130,7 +131,7 @@ const AdminModeration: React.FC = () => {
 
   const handleApproveEvent = async (eventId: string) => {
     try {
-      await api.put(`/events/${eventId}/status`, { status: 'APPROVED' });
+      await api.put(`/ events / ${eventId}/status`, { status: 'APPROVED' });
       setFlaggedEvents(flaggedEvents.filter(e => e.id !== eventId));
       addToast('Event approved', 'success');
     } catch (error) {
