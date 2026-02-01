@@ -4,6 +4,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
+import dns from 'node:dns';
+
+// Force IPv4 to avoid ENETUNREACH errors on some platforms (like Render/Supabase)
+dns.setDefaultResultOrder('ipv4first');
 import { initializeDatabase } from './db/init.js';
 import { initializeSocket } from './services/socketService.js';
 import authRoutes from './routes/auth.js';
