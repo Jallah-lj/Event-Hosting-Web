@@ -1,10 +1,17 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
 // Use environment variable, or fallback to production URL, or local development
-const API_BASE_URL = (import.meta as any).env.VITE_API_URL
+let rawBaseUrl = (import.meta as any).env.VITE_API_URL
   || (window.location.hostname !== 'localhost'
     ? 'https://event-hosting-web.onrender.com/api'
-    : '/api');
+    : 'http://localhost:5000/api');
+
+// Robustness: Ensure the URL ends with /api if it doesn't already
+if (rawBaseUrl && !rawBaseUrl.endsWith('/api') && !rawBaseUrl.endsWith('/api/')) {
+  rawBaseUrl = rawBaseUrl.endsWith('/') ? `${rawBaseUrl}api` : `${rawBaseUrl}/api`;
+}
+
+const API_BASE_URL = rawBaseUrl;
 
 // Create axios instance
 const api = axios.create({
