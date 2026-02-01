@@ -1,5 +1,5 @@
 import express from 'express';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -25,7 +25,7 @@ const generateICS = (event, ticketId = null) => {
   const uid = ticketId || event.id;
   const now = formatICSDate(new Date().toISOString());
   const startDate = formatICSDate(event.date);
-  const endDate = event.endDate 
+  const endDate = event.endDate
     ? formatICSDate(event.endDate)
     : formatICSDate(new Date(new Date(event.date).getTime() + 2 * 60 * 60 * 1000).toISOString()); // Default 2 hours
 
@@ -69,7 +69,7 @@ const generateICS = (event, ticketId = null) => {
 // Generate Google Calendar URL
 const generateGoogleCalendarURL = (event) => {
   const startDate = new Date(event.date).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const endDate = event.endDate 
+  const endDate = event.endDate
     ? new Date(event.endDate).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
     : new Date(new Date(event.date).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
@@ -88,7 +88,7 @@ const generateGoogleCalendarURL = (event) => {
 // Generate Outlook Calendar URL
 const generateOutlookCalendarURL = (event) => {
   const startDate = new Date(event.date).toISOString();
-  const endDate = event.endDate 
+  const endDate = event.endDate
     ? new Date(event.endDate).toISOString()
     : new Date(new Date(event.date).getTime() + 2 * 60 * 60 * 1000).toISOString();
 
@@ -108,10 +108,10 @@ const generateOutlookCalendarURL = (event) => {
 // Generate Yahoo Calendar URL
 const generateYahooCalendarURL = (event) => {
   const startDate = new Date(event.date).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '').slice(0, 15);
-  const duration = event.endDate 
+  const duration = event.endDate
     ? Math.floor((new Date(event.endDate) - new Date(event.date)) / (60 * 1000))
     : 120; // Default 2 hours in minutes
-  
+
   const hours = Math.floor(duration / 60).toString().padStart(2, '0');
   const minutes = (duration % 60).toString().padStart(2, '0');
 
@@ -132,10 +132,11 @@ router.get('/event/:eventId/links', async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = db.prepare(`
+    const eventResult = await db.query(`
       SELECT id, title, description, date, end_date, location, is_virtual, virtual_link
-      FROM events WHERE id = ?
-    `).get(eventId);
+      FROM events WHERE id = $1
+    `, [eventId]);
+    const event = eventResult.rows[0];
 
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
@@ -169,10 +170,11 @@ router.get('/event/:eventId/download.ics', async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = db.prepare(`
+    const eventResult = await db.query(`
       SELECT id, title, description, date, end_date, location, is_virtual, virtual_link
-      FROM events WHERE id = ?
-    `).get(eventId);
+      FROM events WHERE id = $1
+    `, [eventId]);
+    const event = eventResult.rows[0];
 
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
@@ -206,13 +208,14 @@ router.get('/ticket/:ticketId/links', authenticateToken, async (req, res) => {
   try {
     const { ticketId } = req.params;
 
-    const ticket = db.prepare(`
+    const ticketResult = await db.query(`
       SELECT t.id as ticket_id, t.user_id, t.tier_name,
              e.id as event_id, e.title, e.description, e.date, e.end_date, e.location, e.is_virtual, e.virtual_link
       FROM tickets t
       JOIN events e ON t.event_id = e.id
-      WHERE t.id = ?
-    `).get(ticketId);
+      WHERE t.id = $1
+    `, [ticketId]);
+    const ticket = ticketResult.rows[0];
 
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
@@ -250,13 +253,14 @@ router.get('/ticket/:ticketId/download.ics', authenticateToken, async (req, res)
   try {
     const { ticketId } = req.params;
 
-    const ticket = db.prepare(`
+    const ticketResult = await db.query(`
       SELECT t.id as ticket_id, t.user_id, t.tier_name,
              e.id as event_id, e.title, e.description, e.date, e.end_date, e.location, e.is_virtual, e.virtual_link
       FROM tickets t
       JOIN events e ON t.event_id = e.id
-      WHERE t.id = ?
-    `).get(ticketId);
+      WHERE t.id = $1
+    `, [ticketId]);
+    const ticket = ticketResult.rows[0];
 
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });

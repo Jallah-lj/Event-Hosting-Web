@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { sendPasswordResetEmail, sendVerificationEmail, sendTicketConfirmationEmail } from '../services/emailService.js';
 
@@ -19,8 +19,8 @@ router.post('/signup', async (req, res) => {
     }
 
     // Check if user exists
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existingUser) {
+    const existingUser = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
@@ -31,16 +31,16 @@ router.post('/signup', async (req, res) => {
     const userId = uuidv4();
     const userRole = 'ATTENDEE'; // Force default role to ATTENDEE for public signup
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO users (id, name, email, password_hash, role, status, joined)
-      VALUES (?, ?, ?, ?, ?, 'Active', datetime('now'))
-    `).run(userId, name, email, passwordHash, userRole);
+      VALUES ($1, $2, $3, $4, $5, 'Active', NOW())
+    `, [userId, name, email, passwordHash, userRole]);
 
     // Create default preferences
-    db.prepare(`
+    await db.query(`
       INSERT INTO user_preferences (id, user_id)
-      VALUES (?, ?)
-    `).run(uuidv4(), userId);
+      VALUES ($1, $2)
+    `, [uuidv4(), userId]);
 
     // Generate token
     const token = jwt.sign(
@@ -49,7 +49,8 @@ router.post('/signup', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    const user = db.prepare('SELECT id, name, email, role, status, profile_picture, joined FROM users WHERE id = ?').get(userId);
+    const userResult = await db.query('SELECT id, name, email, role, status, profile_picture, joined FROM users WHERE id = $1', [userId]);
+    const user = userResult.rows[0];
 
     res.status(201).json({
       message: 'Account created successfully',
@@ -80,7 +81,9 @@ router.post('/signin', async (req, res) => {
     }
 
     // Find user
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const userResult = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -97,10 +100,11 @@ router.post('/signin', async (req, res) => {
     }
 
     // Update last active
-    db.prepare("UPDATE users SET last_active = datetime('now') WHERE id = ?").run(user.id);
+    await db.query("UPDATE users SET last_active = NOW() WHERE id = $1", [user.id]);
 
     // Check for team membership to get organizer context
-    const teamMember = db.prepare('SELECT organizer_id FROM team_members WHERE email = ?').get(email);
+    const teamMemberResult = await db.query('SELECT organizer_id FROM team_members WHERE email = $1', [email]);
+    const teamMember = teamMemberResult.rows[0];
     const effectiveOrganizerId = teamMember ? teamMember.organizer_id : user.id;
 
     // Generate token
@@ -120,7 +124,7 @@ router.post('/signin', async (req, res) => {
         role: user.role,
         status: user.status,
         profilePicture: user.profile_picture,
-        verified: user.verified === 1,
+        verified: user.verified,
         joined: user.joined
       }
     });
@@ -131,18 +135,20 @@ router.post('/signin', async (req, res) => {
 });
 
 // Demo Login (for development)
-router.post('/demo-login', (req, res) => {
+router.post('/demo-login', async (req, res) => {
   try {
     const { role = 'ATTENDEE' } = req.body;
 
-    let user;
+    let userResult;
     if (role === 'ADMIN') {
-      user = db.prepare("SELECT * FROM users WHERE role = 'ADMIN' LIMIT 1").get();
+      userResult = await db.query("SELECT * FROM users WHERE role = 'ADMIN' LIMIT 1");
     } else if (role === 'ORGANIZER') {
-      user = db.prepare("SELECT * FROM users WHERE role = 'ORGANIZER' LIMIT 1").get();
+      userResult = await db.query("SELECT * FROM users WHERE role = 'ORGANIZER' LIMIT 1");
     } else {
-      user = db.prepare("SELECT * FROM users WHERE role = 'ATTENDEE' LIMIT 1").get();
+      userResult = await db.query("SELECT * FROM users WHERE role = 'ATTENDEE' LIMIT 1");
     }
+
+    const user = userResult.rows[0];
 
     if (!user) {
       return res.status(404).json({ error: 'No demo user found for this role' });
@@ -164,7 +170,7 @@ router.post('/demo-login', (req, res) => {
         role: user.role,
         status: user.status,
         profilePicture: user.profile_picture,
-        verified: user.verified === 1,
+        verified: user.verified,
         joined: user.joined
       }
     });
@@ -175,19 +181,22 @@ router.post('/demo-login', (req, res) => {
 });
 
 // Get Current User
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = db.prepare(`
+    const userResult = await db.query(`
       SELECT id, name, email, role, status, profile_picture, verified, joined, last_active
-      FROM users WHERE id = ?
-    `).get(req.user.id);
+      FROM users WHERE id = $1
+    `, [req.user.id]);
+
+    const user = userResult.rows[0];
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Get preferences
-    const preferences = db.prepare('SELECT * FROM user_preferences WHERE user_id = ?').get(req.user.id);
+    const prefResult = await db.query('SELECT * FROM user_preferences WHERE user_id = $1', [req.user.id]);
+    const preferences = prefResult.rows[0];
 
     res.json({
       user: {
@@ -197,7 +206,7 @@ router.get('/me', authenticateToken, (req, res) => {
         role: user.role,
         status: user.status,
         profilePicture: user.profile_picture,
-        verified: user.verified === 1,
+        verified: user.verified,
         joined: user.joined,
         lastActive: user.last_active
       },
@@ -205,12 +214,12 @@ router.get('/me', authenticateToken, (req, res) => {
         textSize: preferences.text_size,
         currency: preferences.currency,
         language: preferences.language,
-        autoCalendar: preferences.auto_calendar === 1,
-        dataSaver: preferences.data_saver === 1,
+        autoCalendar: preferences.auto_calendar,
+        dataSaver: preferences.data_saver,
         notifications: {
-          email: preferences.notifications_email === 1,
-          sms: preferences.notifications_sms === 1,
-          promotional: preferences.notifications_promotional === 1
+          email: preferences.notifications_email,
+          sms: preferences.notifications_sms,
+          promotional: preferences.notifications_promotional
         }
       } : null
     });
@@ -225,7 +234,8 @@ router.put('/password', authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
+    const userResult = await db.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
 
     const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
     if (!validPassword) {
@@ -233,8 +243,7 @@ router.put('/password', authenticateToken, async (req, res) => {
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
-    db.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(newHash, req.user.id);
+    await db.query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [newHash, req.user.id]);
 
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
@@ -252,8 +261,9 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const user = db.prepare('SELECT id, name, email FROM users WHERE email = ?').get(email);
-    
+    const userResult = await db.query('SELECT id, name, email FROM users WHERE email = $1', [email]);
+    const user = userResult.rows[0];
+
     // Always return success to prevent email enumeration
     if (!user) {
       return res.json({ message: 'If an account exists with that email, a reset link has been sent.' });
@@ -264,11 +274,13 @@ router.post('/forgot-password', async (req, res) => {
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
     const expiresAt = new Date(Date.now() + 3600000).toISOString(); // 1 hour
 
-    // Store token in database
-    db.prepare(`
-      INSERT OR REPLACE INTO password_resets (user_id, token_hash, expires_at)
-      VALUES (?, ?, ?)
-    `).run(user.id, resetTokenHash, expiresAt);
+    // Store token in database (using UPSERT equivalent for Postgres)
+    await db.query(`
+      INSERT INTO password_resets (user_id, token_hash, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id) DO UPDATE 
+      SET token_hash = $2, expires_at = $3
+    `, [user.id, resetTokenHash, expiresAt]);
 
     // Send email
     await sendPasswordResetEmail(user.email, user.name, resetToken);
@@ -297,11 +309,13 @@ router.post('/reset-password', async (req, res) => {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     // Find valid reset record
-    const resetRecord = db.prepare(`
+    const resetResult = await db.query(`
       SELECT pr.*, u.email, u.name FROM password_resets pr
       JOIN users u ON pr.user_id = u.id
-      WHERE pr.token_hash = ? AND pr.expires_at > datetime('now')
-    `).get(tokenHash);
+      WHERE pr.token_hash = $1 AND pr.expires_at > NOW()
+    `, [tokenHash]);
+
+    const resetRecord = resetResult.rows[0];
 
     if (!resetRecord) {
       return res.status(400).json({ error: 'Invalid or expired reset token' });
@@ -309,11 +323,10 @@ router.post('/reset-password', async (req, res) => {
 
     // Hash new password and update user
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    db.prepare("UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(passwordHash, resetRecord.user_id);
+    await db.query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [passwordHash, resetRecord.user_id]);
 
     // Delete used token
-    db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(resetRecord.user_id);
+    await db.query('DELETE FROM password_resets WHERE user_id = $1', [resetRecord.user_id]);
 
     res.json({ message: 'Password reset successfully. You can now sign in.' });
   } catch (error) {
@@ -325,7 +338,8 @@ router.post('/reset-password', async (req, res) => {
 // Request Email Verification
 router.post('/request-verification', authenticateToken, async (req, res) => {
   try {
-    const user = db.prepare('SELECT id, name, email, verified FROM users WHERE id = ?').get(req.user.id);
+    const userResult = await db.query('SELECT id, name, email, verified FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
 
     if (user.verified) {
       return res.json({ message: 'Email already verified' });
@@ -336,11 +350,13 @@ router.post('/request-verification', authenticateToken, async (req, res) => {
     const verifyTokenHash = crypto.createHash('sha256').update(verifyToken).digest('hex');
     const expiresAt = new Date(Date.now() + 86400000).toISOString(); // 24 hours
 
-    // Store token
-    db.prepare(`
-      INSERT OR REPLACE INTO email_verifications (user_id, token_hash, expires_at)
-      VALUES (?, ?, ?)
-    `).run(user.id, verifyTokenHash, expiresAt);
+    // Store token (UPSERT)
+    await db.query(`
+      INSERT INTO email_verifications (user_id, token_hash, expires_at)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id) DO UPDATE 
+      SET token_hash = $2, expires_at = $3
+    `, [user.id, verifyTokenHash, expiresAt]);
 
     // Send email
     await sendVerificationEmail(user.email, user.name, verifyToken);
@@ -363,22 +379,23 @@ router.post('/verify-email', async (req, res) => {
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-    const verification = db.prepare(`
+    const verifyResult = await db.query(`
       SELECT ev.*, u.email FROM email_verifications ev
       JOIN users u ON ev.user_id = u.id
-      WHERE ev.token_hash = ? AND ev.expires_at > datetime('now')
-    `).get(tokenHash);
+      WHERE ev.token_hash = $1 AND ev.expires_at > NOW()
+    `, [tokenHash]);
+
+    const verification = verifyResult.rows[0];
 
     if (!verification) {
       return res.status(400).json({ error: 'Invalid or expired verification token' });
     }
 
     // Mark user as verified
-    db.prepare("UPDATE users SET verified = 1, updated_at = datetime('now') WHERE id = ?")
-      .run(verification.user_id);
+    await db.query("UPDATE users SET verified = TRUE, updated_at = NOW() WHERE id = $1", [verification.user_id]);
 
     // Delete used token
-    db.prepare('DELETE FROM email_verifications WHERE user_id = ?').run(verification.user_id);
+    await db.query('DELETE FROM email_verifications WHERE user_id = $1', [verification.user_id]);
 
     res.json({ message: 'Email verified successfully' });
   } catch (error) {

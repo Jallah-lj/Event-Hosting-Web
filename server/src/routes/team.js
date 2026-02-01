@@ -1,21 +1,23 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
 // Get team members
-router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    let members;
+    let membersResult;
 
     if (req.user.role === 'ADMIN') {
-      members = db.prepare('SELECT * FROM team_members ORDER BY created_at DESC').all();
+      membersResult = await db.query('SELECT * FROM team_members ORDER BY created_at DESC');
     } else {
-      members = db.prepare('SELECT * FROM team_members WHERE organizer_id = ? ORDER BY created_at DESC')
-        .all(req.user.id);
+      membersResult = await db.query('SELECT * FROM team_members WHERE organizer_id = $1 ORDER BY created_at DESC', [req.user.id]);
     }
+
+    const members = membersResult.rows;
 
     res.json(members.map(m => ({
       id: m.id,
@@ -31,12 +33,8 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res)
   }
 });
 
-import bcrypt from 'bcryptjs';
-
-// ...
-
 // Add team member
-router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { name, email, role, password = 'Password@123' } = req.body;
 
@@ -46,39 +44,40 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 
     // 1. Check if user exists
     let userId = uuidv4();
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    const existingUserResult = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = existingUserResult.rows[0];
 
     if (existingUser) {
       // If user exists, we just link them (assuming they are not already a team member for someone else?)
       // For simplicity, we'll allow linking existing users, or fail if they are an ORGANIZER themselves.
       userId = existingUser.id;
       // Optionally update their role if they were just an ATTENDEE?
-      // db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, userId);
+      // await db.query("UPDATE users SET role = $1 WHERE id = $2", [role, userId]);
     } else {
       // Create new user
       const passwordHash = bcrypt.hashSync(password, 10);
-      db.prepare(`
+      await db.query(`
           INSERT INTO users (id, name, email, password_hash, role, status, joined, verified)
-          VALUES (?, ?, ?, ?, ?, 'Active', datetime('now'), 1)
-        `).run(userId, name, email, passwordHash, role);
+          VALUES ($1, $2, $3, $4, $5, 'Active', NOW(), TRUE)
+        `, [userId, name, email, passwordHash, role]);
 
       // Create preferences
-      db.prepare(`INSERT INTO user_preferences (id, user_id) VALUES (?, ?)`).run(uuidv4(), userId);
+      await db.query(`INSERT INTO user_preferences (id, user_id) VALUES ($1, $2)`, [uuidv4(), userId]);
     }
 
     // 2. Add to team_members
     const memberId = uuidv4();
 
     // Check if already in team
-    const existingMember = db.prepare('SELECT id FROM team_members WHERE email = ? AND organizer_id = ?').get(email, req.user.id);
-    if (existingMember) {
+    const existingMemberResult = await db.query('SELECT id FROM team_members WHERE email = $1 AND organizer_id = $2', [email, req.user.id]);
+    if (existingMemberResult.rows.length > 0) {
       return res.status(400).json({ error: 'User is already in your team' });
     }
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO team_members (id, name, email, role, status, scans, organizer_id)
-      VALUES (?, ?, ?, ?, 'ACTIVE', 0, ?)
-    `).run(memberId, name, email, role, req.user.id);
+      VALUES ($1, $2, $3, $4, 'ACTIVE', 0, $5)
+    `, [memberId, name, email, role, req.user.id]);
 
     res.status(201).json({
       message: 'Team member account created',
@@ -91,17 +90,17 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 });
 
 // Update team member
-router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { role, status, scans } = req.body;
 
-    db.prepare(`
+    await db.query(`
       UPDATE team_members SET 
-        role = COALESCE(?, role),
-        status = COALESCE(?, status),
-        scans = COALESCE(?, scans)
-      WHERE id = ? AND (organizer_id = ? OR ? = 'ADMIN')
-    `).run(role, status, scans, req.params.id, req.user.id, req.user.role);
+        role = COALESCE($1, role),
+        status = COALESCE($2, status),
+        scans = COALESCE($3, scans)
+      WHERE id = $4 AND (organizer_id = $5 OR $6 = 'ADMIN')
+    `, [role, status, scans, req.params.id, req.user.id, req.user.role]);
 
     res.json({ message: 'Team member updated' });
   } catch (error) {
@@ -111,10 +110,11 @@ router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, r
 });
 
 // Delete team member
-router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    db.prepare('DELETE FROM team_members WHERE id = ? AND (organizer_id = ? OR ? = \'ADMIN\')')
-      .run(req.params.id, req.user.id, req.user.role);
+    await db.query(`
+      DELETE FROM team_members WHERE id = $1 AND (organizer_id = $2 OR $3 = 'ADMIN')
+    `, [req.params.id, req.user.id, req.user.role]);
     res.json({ message: 'Team member removed' });
   } catch (error) {
     console.error('Delete team member error:', error);
@@ -123,10 +123,9 @@ router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req
 });
 
 // Increment scan count
-router.post('/:id/scan', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.post('/:id/scan', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    db.prepare('UPDATE team_members SET scans = scans + 1 WHERE id = ?')
-      .run(req.params.id);
+    await db.query('UPDATE team_members SET scans = scans + 1 WHERE id = $1', [req.params.id]);
     res.json({ message: 'Scan recorded' });
   } catch (error) {
     console.error('Record scan error:', error);

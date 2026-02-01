@@ -91,6 +91,6 @@ app.set('io', io);
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready`);
-  console.log(`📦 Database: SQLite (local)`);
+  console.log(`📦 Database: PostgreSQL (Supabase)`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

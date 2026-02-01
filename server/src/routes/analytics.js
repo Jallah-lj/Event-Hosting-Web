@@ -1,25 +1,27 @@
 import express from 'express';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get live analytics for organizer
-router.get('/organizer/live', authenticateToken, requireRole('ORGANIZER', 'ADMIN', 'ANALYST'), (req, res) => {
+router.get('/organizer/live', authenticateToken, requireRole('ORGANIZER', 'ADMIN', 'ANALYST'), async (req, res) => {
   try {
     const organizerId = req.user.id;
     const now = new Date();
 
     // 1. Get total stats (restricted to organizer)
-    const totalStats = db.prepare(`
+    const totalStatsResult = await db.query(`
       SELECT 
-        COUNT(t.id) as totalTickets,
-        SUM(t.price_paid) as totalRevenue,
-        SUM(CASE WHEN t.used = 1 THEN 1 ELSE 0 END) as totalCheckIns
+        COUNT(t.id) as total_tickets,
+        COALESCE(SUM(t.price_paid), 0) as total_revenue,
+        SUM(CASE WHEN t.used = true THEN 1 ELSE 0 END) as total_check_ins
       FROM tickets t
       JOIN events e ON t.event_id = e.id
-      WHERE e.organizer_id = ?
-    `).get(organizerId);
+      WHERE e.organizer_id = $1
+    `, [organizerId]);
+
+    const totalStats = totalStatsResult.rows[0];
 
     // 2. Mock live data stream (Last 60 minutes simulation for "Live" effect)
     // In a real app, you'd aggregate actual timestamps grouped by minute.
@@ -44,25 +46,33 @@ router.get('/organizer/live', authenticateToken, requireRole('ORGANIZER', 'ADMIN
     }
 
     // 3. Get Recent Activity (Real data)
-    const recentActivity = db.prepare(`
+    const recentActivityResult = await db.query(`
       SELECT 
         t.id, 
         'CHECKIN' as type,
         t.check_in_time as timestamp,
-        e.title as eventTitle,
+        e.title as event_title,
         COALESCE(t.attendee_name, 'Unknown') as attendee
       FROM tickets t
       JOIN events e ON t.event_id = e.id
-      WHERE e.organizer_id = ? AND t.used = 1
+      WHERE e.organizer_id = $1 AND t.used = true
       ORDER BY t.check_in_time DESC
       LIMIT 5
-    `).all(organizerId);
+    `, [organizerId]);
+
+    const recentActivity = recentActivityResult.rows.map(row => ({
+      id: row.id,
+      type: row.type,
+      timestamp: row.timestamp,
+      eventTitle: row.event_title,
+      attendee: row.attendee
+    }));
 
     res.json({
       stats: {
-        revenue: totalStats.totalRevenue || 0,
-        ticketsSold: totalStats.totalTickets || 0,
-        checkInRate: totalStats.totalTickets ? Math.round((totalStats.totalCheckIns / totalStats.totalTickets) * 100) : 0
+        revenue: parseFloat(totalStats.total_revenue),
+        ticketsSold: parseInt(totalStats.total_tickets),
+        checkInRate: parseInt(totalStats.total_tickets) ? Math.round((parseInt(totalStats.total_check_ins) / parseInt(totalStats.total_tickets)) * 100) : 0
       },
       chartData: timeSeriesData,
       recentActivity

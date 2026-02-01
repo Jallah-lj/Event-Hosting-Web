@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,7 +42,7 @@ const avatarUpload = multer({
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (extname && mimetype) {
       return cb(null, true);
     }
@@ -51,21 +51,21 @@ const avatarUpload = multer({
 });
 
 // Upload avatar
-router.post('/avatar', authenticateToken, avatarUpload.single('avatar'), (req, res) => {
+router.post('/avatar', authenticateToken, avatarUpload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    
+
     // Get old avatar to delete later
-    const user = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.user.id);
+    const userResult = await db.query('SELECT profile_picture FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
     const oldAvatar = user?.profile_picture;
-    
+
     // Update user's avatar in database
-    db.prepare('UPDATE users SET profile_picture = ?, updated_at = datetime("now") WHERE id = ?')
-      .run(avatarUrl, req.user.id);
+    await db.query('UPDATE users SET profile_picture = $1, updated_at = NOW() WHERE id = $2', [avatarUrl, req.user.id]);
 
     // Delete old avatar if exists
     if (oldAvatar && oldAvatar !== avatarUrl) {
@@ -75,9 +75,9 @@ router.post('/avatar', authenticateToken, avatarUpload.single('avatar'), (req, r
       }
     }
 
-    res.json({ 
+    res.json({
       message: 'Avatar uploaded successfully',
-      avatarUrl 
+      avatarUrl
     });
   } catch (error) {
     console.error('Avatar upload error:', error);
@@ -86,10 +86,11 @@ router.post('/avatar', authenticateToken, avatarUpload.single('avatar'), (req, r
 });
 
 // Delete avatar
-router.delete('/avatar', authenticateToken, (req, res) => {
+router.delete('/avatar', authenticateToken, async (req, res) => {
   try {
-    const user = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.user.id);
-    
+    const userResult = await db.query('SELECT profile_picture FROM users WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
+
     if (user?.profile_picture) {
       const avatarPath = path.join(__dirname, '../..', user.profile_picture);
       if (fs.existsSync(avatarPath)) {
@@ -97,8 +98,7 @@ router.delete('/avatar', authenticateToken, (req, res) => {
       }
     }
 
-    db.prepare('UPDATE users SET profile_picture = NULL, updated_at = datetime("now") WHERE id = ?')
-      .run(req.user.id);
+    await db.query('UPDATE users SET profile_picture = NULL, updated_at = NOW() WHERE id = $1', [req.user.id]);
 
     res.json({ message: 'Avatar deleted successfully' });
   } catch (error) {

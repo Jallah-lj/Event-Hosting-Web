@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: liberiaconnect-server
+    env: node
+    region: ohio
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: liberiaconnect-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://liberiaconnect-client.vercel.app # Update this after frontend deployment
+
+databases:
+  - name: liberiaconnect-db
+    databaseName: liberiaconnect
+    user: liberiaconnect_user
+    plan: free # Optional: specify plan if needed

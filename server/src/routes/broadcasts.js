@@ -1,21 +1,22 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get broadcasts
-router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    let broadcasts;
-    
+    let broadcastsResult;
+
     if (req.user.role === 'ADMIN') {
-      broadcasts = db.prepare('SELECT * FROM broadcasts ORDER BY date DESC').all();
+      broadcastsResult = await db.query('SELECT * FROM broadcasts ORDER BY date DESC');
     } else {
-      broadcasts = db.prepare('SELECT * FROM broadcasts WHERE organizer_id = ? ORDER BY date DESC')
-        .all(req.user.id);
+      broadcastsResult = await db.query('SELECT * FROM broadcasts WHERE organizer_id = $1 ORDER BY date DESC', [req.user.id]);
     }
+
+    const broadcasts = broadcastsResult.rows;
 
     res.json(broadcasts.map(b => ({
       id: b.id,
@@ -33,7 +34,7 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res)
 });
 
 // Create broadcast
-router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { subject, body, eventId } = req.body;
 
@@ -46,20 +47,21 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
     let recipientCount = 0;
 
     if (eventId) {
-      const event = db.prepare('SELECT title FROM events WHERE id = ?').get(eventId);
+      const eventResult = await db.query('SELECT title FROM events WHERE id = $1', [eventId]);
+      const event = eventResult.rows[0];
       if (event) {
         eventTitle = event.title;
-        const count = db.prepare('SELECT COUNT(*) as count FROM tickets WHERE event_id = ?').get(eventId);
-        recipientCount = count.count;
+        const countResult = await db.query('SELECT COUNT(*) as count FROM tickets WHERE event_id = $1', [eventId]);
+        recipientCount = parseInt(countResult.rows[0].count);
       }
     }
 
     const broadcastId = uuidv4();
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO broadcasts (id, subject, body, event_id, event_title, date, recipient_count, organizer_id)
-      VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)
-    `).run(broadcastId, subject, body || null, eventId || null, eventTitle, recipientCount, req.user.id);
+      VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
+    `, [broadcastId, subject, body || null, eventId || null, eventTitle, recipientCount, req.user.id]);
 
     res.status(201).json({
       message: 'Broadcast sent',
@@ -80,10 +82,13 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 });
 
 // Delete broadcast
-router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    db.prepare('DELETE FROM broadcasts WHERE id = ? AND (organizer_id = ? OR ? = \'ADMIN\')')
-      .run(req.params.id, req.user.id, req.user.role);
+    await db.query(`
+      DELETE FROM broadcasts 
+      WHERE id = $1 AND (organizer_id = $2 OR $3 = 'ADMIN')
+    `, [req.params.id, req.user.id, req.user.role]);
+
     res.json({ message: 'Broadcast deleted' });
   } catch (error) {
     console.error('Delete broadcast error:', error);

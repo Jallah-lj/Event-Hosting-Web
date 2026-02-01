@@ -1,6 +1,6 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { sendRefundEmail } from '../services/emailService.js';
 
@@ -25,20 +25,21 @@ router.get('/', authenticateToken, async (req, res) => {
 
     const conditions = [];
     const params = [];
+    let paramIndex = 1;
 
     // Organizers can only see refunds for their events
     if (userRole === 'ORGANIZER') {
-      conditions.push('e.organizer_id = ?');
+      conditions.push(`e.organizer_id = $${paramIndex++}`);
       params.push(req.user.id);
     }
 
     if (status && status !== 'all') {
-      conditions.push('r.status = ?');
+      conditions.push(`r.status = $${paramIndex++}`);
       params.push(status.toUpperCase());
     }
 
     if (eventId) {
-      conditions.push('r.event_id = ?');
+      conditions.push(`r.event_id = $${paramIndex++}`);
       params.push(eventId);
     }
 
@@ -48,7 +49,8 @@ router.get('/', authenticateToken, async (req, res) => {
 
     query += ' ORDER BY r.created_at DESC';
 
-    const requests = db.prepare(query).all(...params);
+    const requestsResult = await db.query(query, params);
+    const requests = requestsResult.rows;
 
     res.json(requests.map(r => ({
       id: r.id,
@@ -76,14 +78,16 @@ router.get('/', authenticateToken, async (req, res) => {
 // Get my refund requests (for attendees)
 router.get('/my', authenticateToken, async (req, res) => {
   try {
-    const requests = db.prepare(`
+    const requestsResult = await db.query(`
       SELECT r.*, e.title as event_title, t.tier_name
       FROM refund_requests r
       JOIN events e ON r.event_id = e.id
       JOIN tickets t ON r.ticket_id = t.id
-      WHERE r.user_id = ?
+      WHERE r.user_id = $1
       ORDER BY r.created_at DESC
-    `).all(req.user.id);
+    `, [req.user.id]);
+
+    const requests = requestsResult.rows;
 
     res.json(requests.map(r => ({
       id: r.id,
@@ -113,13 +117,15 @@ router.post('/request', authenticateToken, async (req, res) => {
     }
 
     // Get ticket and event info
-    const ticket = db.prepare(`
+    const ticketResult = await db.query(`
       SELECT t.*, e.id as event_id, e.title as event_title, e.date as event_date, 
              e.refund_policy, e.organizer_id
       FROM tickets t
       JOIN events e ON t.event_id = e.id
-      WHERE t.id = ?
-    `).get(ticketId);
+      WHERE t.id = $1
+    `, [ticketId]);
+
+    const ticket = ticketResult.rows[0];
 
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
@@ -134,9 +140,11 @@ router.post('/request', authenticateToken, async (req, res) => {
     }
 
     // Check if refund already requested
-    const existingRequest = db.prepare(
-      'SELECT id FROM refund_requests WHERE ticket_id = ? AND status != ?'
-    ).get(ticketId, 'REJECTED');
+    const existingRequestResult = await db.query(
+      'SELECT id FROM refund_requests WHERE ticket_id = $1 AND status != $2',
+      [ticketId, 'REJECTED']
+    );
+    const existingRequest = existingRequestResult.rows[0];
 
     if (existingRequest) {
       return res.status(400).json({ error: 'Refund already requested for this ticket' });
@@ -148,8 +156,8 @@ router.post('/request', authenticateToken, async (req, res) => {
     const hoursUntilEvent = (eventDate - now) / (1000 * 60 * 60);
 
     if (hoursUntilEvent < 24) {
-      return res.status(400).json({ 
-        error: 'Refund requests must be made at least 24 hours before the event' 
+      return res.status(400).json({
+        error: 'Refund requests must be made at least 24 hours before the event'
       });
     }
 
@@ -157,10 +165,10 @@ router.post('/request', authenticateToken, async (req, res) => {
     const requestId = uuidv4();
     const refundAmount = ticket.price_paid || 0;
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO refund_requests (id, ticket_id, user_id, event_id, amount, reason, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
-    `).run(requestId, ticketId, req.user.id, ticket.event_id, refundAmount, reason || null);
+      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING')
+    `, [requestId, ticketId, req.user.id, ticket.event_id, refundAmount, reason || null]);
 
     res.status(201).json({
       message: 'Refund request submitted successfully',
@@ -189,7 +197,7 @@ router.put('/:id/process', authenticateToken, async (req, res) => {
     }
 
     // Get the refund request
-    const request = db.prepare(`
+    const requestResult = await db.query(`
       SELECT r.*, e.organizer_id, e.title as event_title,
              u.name as user_name, u.email as user_email,
              t.tier_name
@@ -197,8 +205,10 @@ router.put('/:id/process', authenticateToken, async (req, res) => {
       JOIN events e ON r.event_id = e.id
       JOIN users u ON r.user_id = u.id
       JOIN tickets t ON r.ticket_id = t.id
-      WHERE r.id = ?
-    `).get(id);
+      WHERE r.id = $1
+    `, [id]);
+
+    const request = requestResult.rows[0];
 
     if (!request) {
       return res.status(404).json({ error: 'Refund request not found' });
@@ -216,31 +226,31 @@ router.put('/:id/process', authenticateToken, async (req, res) => {
     const newStatus = action.toUpperCase() === 'APPROVE' ? 'APPROVED' : 'REJECTED';
 
     // Update request status
-    db.prepare(`
+    await db.query(`
       UPDATE refund_requests 
-      SET status = ?, processed_by = ?, processed_at = datetime('now'), updated_at = datetime('now')
-      WHERE id = ?
-    `).run(newStatus, req.user.id, id);
+      SET status = $1, processed_by = $2, processed_at = NOW(), updated_at = NOW()
+      WHERE id = $3
+    `, [newStatus, req.user.id, id]);
 
     // If approved, mark ticket as refunded and create transaction
     if (newStatus === 'APPROVED') {
       // Mark ticket as refunded (soft delete or mark used with special note)
-      db.prepare(`
-        UPDATE tickets SET used = 1, check_in_time = NULL, updated_at = datetime('now')
-        WHERE id = ?
-      `).run(request.ticket_id);
+      await db.query(`
+        UPDATE tickets SET used = TRUE, check_in_time = NULL, updated_at = NOW()
+        WHERE id = $1
+      `, [request.ticket_id]);
 
       // Create refund transaction record
-      db.prepare(`
+      await db.query(`
         INSERT INTO transactions (id, type, description, amount, status, user_id, event_id, date)
-        VALUES (?, 'REFUND', ?, ?, 'COMPLETED', ?, ?, datetime('now'))
-      `).run(
+        VALUES ($1, 'REFUND', $2, $3, 'COMPLETED', $4, $5, NOW())
+      `, [
         uuidv4(),
         `Refund for ${request.event_title}`,
         -request.amount, // Negative amount for refund
         request.user_id,
         request.event_id
-      );
+      ]);
 
       // Send refund email
       await sendRefundEmail(
@@ -270,21 +280,22 @@ router.put('/:id/process', authenticateToken, async (req, res) => {
 router.get('/stats', authenticateToken, async (req, res) => {
   try {
     const { eventId } = req.query;
-    
+
     let baseCondition = '';
     const params = [];
+    let paramIndex = 1;
 
     if (req.user.role === 'ORGANIZER') {
-      baseCondition = 'JOIN events e ON r.event_id = e.id WHERE e.organizer_id = ?';
+      baseCondition = `JOIN events e ON r.event_id = e.id WHERE e.organizer_id = $${paramIndex++}`;
       params.push(req.user.id);
     }
 
     if (eventId) {
-      baseCondition += (baseCondition ? ' AND' : ' WHERE') + ' r.event_id = ?';
+      baseCondition += (baseCondition ? ' AND' : ' WHERE') + ` r.event_id = $${paramIndex++}`;
       params.push(eventId);
     }
 
-    const stats = db.prepare(`
+    const statsResult = await db.query(`
       SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN r.status = 'PENDING' THEN 1 ELSE 0 END) as pending,
@@ -293,14 +304,16 @@ router.get('/stats', authenticateToken, async (req, res) => {
         SUM(CASE WHEN r.status = 'APPROVED' THEN r.amount ELSE 0 END) as total_refunded
       FROM refund_requests r
       ${baseCondition}
-    `).get(...params);
+    `, params);
+
+    const stats = statsResult.rows[0];
 
     res.json({
-      total: stats.total || 0,
-      pending: stats.pending || 0,
-      approved: stats.approved || 0,
-      rejected: stats.rejected || 0,
-      totalRefunded: stats.total_refunded || 0
+      total: parseInt(stats.total) || 0,
+      pending: parseInt(stats.pending) || 0,
+      approved: parseInt(stats.approved) || 0,
+      rejected: parseInt(stats.rejected) || 0,
+      totalRefunded: parseFloat(stats.total_refunded) || 0
     });
   } catch (error) {
     console.error('Get refund stats error:', error);

@@ -1,21 +1,22 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get referrals
-router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    let referrals;
-    
+    let referralsResult;
+
     if (req.user.role === 'ADMIN') {
-      referrals = db.prepare('SELECT * FROM referrals ORDER BY created_at DESC').all();
+      referralsResult = await db.query('SELECT * FROM referrals ORDER BY created_at DESC');
     } else {
-      referrals = db.prepare('SELECT * FROM referrals WHERE organizer_id = ? ORDER BY created_at DESC')
-        .all(req.user.id);
+      referralsResult = await db.query('SELECT * FROM referrals WHERE organizer_id = $1 ORDER BY created_at DESC', [req.user.id]);
     }
+
+    const referrals = referralsResult.rows;
 
     res.json(referrals.map(r => ({
       id: r.id,
@@ -33,7 +34,7 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res)
 });
 
 // Create referral
-router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { name, code, url } = req.body;
 
@@ -43,10 +44,10 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 
     const referralId = uuidv4();
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO referrals (id, name, code, url, clicks, sales, revenue, organizer_id)
-      VALUES (?, ?, ?, ?, 0, 0, 0, ?)
-    `).run(referralId, name, code, url || null, req.user.id);
+      VALUES ($1, $2, $3, $4, 0, 0, 0, $5)
+    `, [referralId, name, code, url || null, req.user.id]);
 
     res.status(201).json({
       message: 'Referral created',
@@ -59,19 +60,19 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 });
 
 // Update referral
-router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { name, url, clicks, sales, revenue } = req.body;
 
-    db.prepare(`
+    await db.query(`
       UPDATE referrals SET 
-        name = COALESCE(?, name),
-        url = COALESCE(?, url),
-        clicks = COALESCE(?, clicks),
-        sales = COALESCE(?, sales),
-        revenue = COALESCE(?, revenue)
-      WHERE id = ? AND (organizer_id = ? OR ? = 'ADMIN')
-    `).run(name, url, clicks, sales, revenue, req.params.id, req.user.id, req.user.role);
+        name = COALESCE($1, name),
+        url = COALESCE($2, url),
+        clicks = COALESCE($3, clicks),
+        sales = COALESCE($4, sales),
+        revenue = COALESCE($5, revenue)
+      WHERE id = $6 AND (organizer_id = $7 OR $8 = 'ADMIN')
+    `, [name, url, clicks, sales, revenue, req.params.id, req.user.id, req.user.role]);
 
     res.json({ message: 'Referral updated' });
   } catch (error) {
@@ -81,10 +82,12 @@ router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, r
 });
 
 // Delete referral
-router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    db.prepare('DELETE FROM referrals WHERE id = ? AND (organizer_id = ? OR ? = \'ADMIN\')')
-      .run(req.params.id, req.user.id, req.user.role);
+    await db.query(`
+      DELETE FROM referrals 
+      WHERE id = $1 AND (organizer_id = $2 OR $3 = 'ADMIN')
+    `, [req.params.id, req.user.id, req.user.role]);
     res.json({ message: 'Referral deleted' });
   } catch (error) {
     console.error('Delete referral error:', error);
@@ -93,10 +96,9 @@ router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req
 });
 
 // Track referral click
-router.post('/:code/click', (req, res) => {
+router.post('/:code/click', async (req, res) => {
   try {
-    db.prepare('UPDATE referrals SET clicks = clicks + 1 WHERE code = ?')
-      .run(req.params.code);
+    await db.query('UPDATE referrals SET clicks = clicks + 1 WHERE code = $1', [req.params.code]);
     res.json({ message: 'Click tracked' });
   } catch (error) {
     console.error('Track click error:', error);

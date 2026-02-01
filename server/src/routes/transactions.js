@@ -1,22 +1,23 @@
 import express from 'express';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get transactions (Organizer sees their own, Admin sees all)
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    let transactions;
-    
+    let transactionsResult;
+
     if (req.user.role === 'ADMIN') {
-      transactions = db.prepare('SELECT * FROM transactions ORDER BY date DESC').all();
+      transactionsResult = await db.query('SELECT * FROM transactions ORDER BY date DESC');
     } else if (req.user.role === 'ORGANIZER') {
-      transactions = db.prepare('SELECT * FROM transactions WHERE organizer_id = ? ORDER BY date DESC')
-        .all(req.user.id);
+      transactionsResult = await db.query('SELECT * FROM transactions WHERE organizer_id = $1 ORDER BY date DESC', [req.user.id]);
     } else {
       return res.status(403).json({ error: 'Not authorized' });
     }
+
+    const transactions = transactionsResult.rows;
 
     res.json(transactions.map(t => ({
       id: t.id,
@@ -36,39 +37,50 @@ router.get('/', authenticateToken, (req, res) => {
 });
 
 // Get transaction stats
-router.get('/stats', authenticateToken, (req, res) => {
+router.get('/stats', authenticateToken, async (req, res) => {
   try {
     let whereClause = '';
     let params = [];
-    
+    let paramIndex = 1;
+
     if (req.user.role === 'ORGANIZER') {
-      whereClause = 'WHERE organizer_id = ?';
+      whereClause = `WHERE organizer_id = $${paramIndex}`;
       params = [req.user.id];
     }
 
-    const totalSales = db.prepare(`
+    const salesQuery = `
       SELECT COALESCE(SUM(amount), 0) as total 
       FROM transactions 
       ${whereClause ? whereClause + ' AND' : 'WHERE'} type = 'SALE' AND status = 'COMPLETED'
-    `).get(...params);
+    `;
 
-    const totalFees = db.prepare(`
+    const feesQuery = `
       SELECT COALESCE(SUM(amount), 0) as total 
       FROM transactions 
       ${whereClause ? whereClause + ' AND' : 'WHERE'} type = 'FEE' AND status = 'COMPLETED'
-    `).get(...params);
+    `;
 
-    const totalPayouts = db.prepare(`
+    const payoutsQuery = `
       SELECT COALESCE(SUM(ABS(amount)), 0) as total 
       FROM transactions 
       ${whereClause ? whereClause + ' AND' : 'WHERE'} type = 'PAYOUT'
-    `).get(...params);
+    `;
+
+    const [salesResult, feesResult, payoutsResult] = await Promise.all([
+      db.query(salesQuery, params),
+      db.query(feesQuery, params),
+      db.query(payoutsQuery, params)
+    ]);
+
+    const totalSales = parseFloat(salesResult.rows[0].total);
+    const totalFees = parseFloat(feesResult.rows[0].total);
+    const totalPayouts = parseFloat(payoutsResult.rows[0].total);
 
     res.json({
-      totalSales: totalSales.total,
-      totalFees: totalFees.total,
-      totalPayouts: totalPayouts.total,
-      netRevenue: totalSales.total - totalFees.total - totalPayouts.total
+      totalSales: totalSales,
+      totalFees: totalFees,
+      totalPayouts: totalPayouts,
+      netRevenue: totalSales - totalFees - totalPayouts
     });
   } catch (error) {
     console.error('Get transaction stats error:', error);

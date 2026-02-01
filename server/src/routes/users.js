@@ -1,18 +1,20 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get all users (Admin only)
-router.get('/', authenticateToken, requireRole('ADMIN'), (req, res) => {
+router.get('/', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   try {
-    const users = db.prepare(`
+    const usersResult = await db.query(`
       SELECT id, name, email, role, status, profile_picture, verified, joined, last_active
       FROM users ORDER BY joined DESC
-    `).all();
+    `);
+
+    const users = usersResult.rows;
 
     res.json(users.map(u => ({
       id: u.id,
@@ -21,7 +23,7 @@ router.get('/', authenticateToken, requireRole('ADMIN'), (req, res) => {
       role: u.role,
       status: u.status,
       profilePicture: u.profile_picture,
-      verified: u.verified === 1,
+      verified: u.verified,
       joined: u.joined,
       lastActive: u.last_active
     })));
@@ -32,12 +34,14 @@ router.get('/', authenticateToken, requireRole('ADMIN'), (req, res) => {
 });
 
 // Get user by ID
-router.get('/:id', authenticateToken, (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
-    const user = db.prepare(`
+    const userResult = await db.query(`
       SELECT id, name, email, role, status, profile_picture, verified, joined, last_active
-      FROM users WHERE id = ?
-    `).get(req.params.id);
+      FROM users WHERE id = $1
+    `, [req.params.id]);
+
+    const user = userResult.rows[0];
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -46,7 +50,8 @@ router.get('/:id', authenticateToken, (req, res) => {
     // Get user notes if admin
     let notes = [];
     if (req.user.role === 'ADMIN') {
-      notes = db.prepare('SELECT * FROM user_notes WHERE user_id = ? ORDER BY date DESC').all(req.params.id);
+      const notesResult = await db.query('SELECT * FROM user_notes WHERE user_id = $1 ORDER BY date DESC', [req.params.id]);
+      notes = notesResult.rows;
     }
 
     res.json({
@@ -56,7 +61,7 @@ router.get('/:id', authenticateToken, (req, res) => {
       role: user.role,
       status: user.status,
       profilePicture: user.profile_picture,
-      verified: user.verified === 1,
+      verified: user.verified,
       joined: user.joined,
       lastActive: user.last_active,
       notes: notes.map(n => ({
@@ -73,7 +78,7 @@ router.get('/:id', authenticateToken, (req, res) => {
 });
 
 // Update user
-router.put('/:id', authenticateToken, (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
     // Only allow updating own profile or admin can update any
     if (req.user.id !== req.params.id && req.user.role !== 'ADMIN') {
@@ -85,28 +90,29 @@ router.put('/:id', authenticateToken, (req, res) => {
     // Build update query dynamically
     const updates = [];
     const values = [];
+    let queryIndex = 1;
 
     if (name) {
-      updates.push('name = ?');
+      updates.push(`name = $${queryIndex++}`);
       values.push(name);
     }
     if (email) {
-      updates.push('email = ?');
+      updates.push(`email = $${queryIndex++}`);
       values.push(email);
     }
     if (profilePicture !== undefined) {
-      updates.push('profile_picture = ?');
+      updates.push(`profile_picture = $${queryIndex++}`);
       values.push(profilePicture);
     }
 
     // Only admin can change status and role
     if (req.user.role === 'ADMIN') {
       if (status) {
-        updates.push('status = ?');
+        updates.push(`status = $${queryIndex++}`);
         values.push(status);
       }
       if (role) {
-        updates.push('role = ?');
+        updates.push(`role = $${queryIndex++}`);
         values.push(role);
       }
     }
@@ -115,15 +121,17 @@ router.put('/:id', authenticateToken, (req, res) => {
       return res.status(400).json({ error: 'No updates provided' });
     }
 
-    updates.push("updated_at = datetime('now')");
+    updates.push(`updated_at = NOW()`);
     values.push(req.params.id);
 
-    db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+    await db.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${queryIndex}`, values);
 
-    const updatedUser = db.prepare(`
+    const updatedUserResult = await db.query(`
       SELECT id, name, email, role, status, profile_picture, verified, joined
-      FROM users WHERE id = ?
-    `).get(req.params.id);
+      FROM users WHERE id = $1
+    `, [req.params.id]);
+
+    const updatedUser = updatedUserResult.rows[0];
 
     res.json({
       message: 'User updated successfully',
@@ -134,7 +142,7 @@ router.put('/:id', authenticateToken, (req, res) => {
         role: updatedUser.role,
         status: updatedUser.status,
         profilePicture: updatedUser.profile_picture,
-        verified: updatedUser.verified === 1,
+        verified: updatedUser.verified,
         joined: updatedUser.joined
       }
     });
@@ -145,11 +153,11 @@ router.put('/:id', authenticateToken, (req, res) => {
 });
 
 // Delete user (Admin only)
-router.delete('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   try {
-    const result = db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
+    const result = await db.query('DELETE FROM users WHERE id = $1', [req.params.id]);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -161,15 +169,15 @@ router.delete('/:id', authenticateToken, requireRole('ADMIN'), (req, res) => {
 });
 
 // Add note to user (Admin only)
-router.post('/:id/notes', authenticateToken, requireRole('ADMIN'), (req, res) => {
+router.post('/:id/notes', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   try {
     const { text } = req.body;
     const noteId = uuidv4();
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO user_notes (id, user_id, text, date, author)
-      VALUES (?, ?, ?, datetime('now'), ?)
-    `).run(noteId, req.params.id, text, req.user.name || 'Admin');
+      VALUES ($1, $2, $3, NOW(), $4)
+    `, [noteId, req.params.id, text, req.user.name || 'Admin']);
 
     res.status(201).json({
       message: 'Note added',
@@ -182,7 +190,7 @@ router.post('/:id/notes', authenticateToken, requireRole('ADMIN'), (req, res) =>
 });
 
 // Update user preferences
-router.put('/:id/preferences', authenticateToken, (req, res) => {
+router.put('/:id/preferences', authenticateToken, async (req, res) => {
   try {
     if (req.user.id !== req.params.id) {
       return res.status(403).json({ error: 'Not authorized' });
@@ -190,48 +198,49 @@ router.put('/:id/preferences', authenticateToken, (req, res) => {
 
     const { textSize, currency, language, autoCalendar, dataSaver, notifications } = req.body;
 
-    const existing = db.prepare('SELECT id FROM user_preferences WHERE user_id = ?').get(req.params.id);
+    const existingResult = await db.query('SELECT id FROM user_preferences WHERE user_id = $1', [req.params.id]);
+    const existing = existingResult.rows[0];
 
     if (existing) {
-      db.prepare(`
+      await db.query(`
         UPDATE user_preferences SET
-          text_size = COALESCE(?, text_size),
-          currency = COALESCE(?, currency),
-          language = COALESCE(?, language),
-          auto_calendar = COALESCE(?, auto_calendar),
-          data_saver = COALESCE(?, data_saver),
-          notifications_email = COALESCE(?, notifications_email),
-          notifications_sms = COALESCE(?, notifications_sms),
-          notifications_promotional = COALESCE(?, notifications_promotional),
-          updated_at = datetime('now')
-        WHERE user_id = ?
-      `).run(
+          text_size = COALESCE($1, text_size),
+          currency = COALESCE($2, currency),
+          language = COALESCE($3, language),
+          auto_calendar = COALESCE($4, auto_calendar),
+          data_saver = COALESCE($5, data_saver),
+          notifications_email = COALESCE($6, notifications_email),
+          notifications_sms = COALESCE($7, notifications_sms),
+          notifications_promotional = COALESCE($8, notifications_promotional),
+          updated_at = NOW()
+        WHERE user_id = $9
+      `, [
         textSize,
         currency,
         language,
-        autoCalendar !== undefined ? (autoCalendar ? 1 : 0) : null,
-        dataSaver !== undefined ? (dataSaver ? 1 : 0) : null,
-        notifications?.email !== undefined ? (notifications.email ? 1 : 0) : null,
-        notifications?.sms !== undefined ? (notifications.sms ? 1 : 0) : null,
-        notifications?.promotional !== undefined ? (notifications.promotional ? 1 : 0) : null,
+        autoCalendar,
+        dataSaver,
+        notifications?.email,
+        notifications?.sms,
+        notifications?.promotional,
         req.params.id
-      );
+      ]);
     } else {
-      db.prepare(`
+      await db.query(`
         INSERT INTO user_preferences (id, user_id, text_size, currency, language, auto_calendar, data_saver, notifications_email, notifications_sms, notifications_promotional)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
         uuidv4(),
         req.params.id,
         textSize || 'Standard',
         currency || 'USD',
         language || 'English (Liberia)',
-        autoCalendar ? 1 : 0,
-        dataSaver ? 1 : 0,
-        notifications?.email ? 1 : 0,
-        notifications?.sms ? 1 : 0,
-        notifications?.promotional ? 1 : 0
-      );
+        autoCalendar ? true : false,
+        dataSaver ? true : false,
+        notifications?.email ? true : false,
+        notifications?.sms ? true : false,
+        notifications?.promotional ? true : false
+      ]);
     }
 
     res.json({ message: 'Preferences updated' });
@@ -251,8 +260,8 @@ router.post('/', authenticateToken, requireRole('ADMIN'), async (req, res) => {
     }
 
     // Check if user exists
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existingUser) {
+    const existingUserResult = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existingUserResult.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
@@ -260,18 +269,19 @@ router.post('/', authenticateToken, requireRole('ADMIN'), async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const userId = uuidv4();
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO users (id, name, email, password_hash, role, status, joined)
-      VALUES (?, ?, ?, ?, ?, 'Active', datetime('now'))
-    `).run(userId, name, email, passwordHash, role);
+      VALUES ($1, $2, $3, $4, $5, 'Active', NOW())
+    `, [userId, name, email, passwordHash, role]);
 
     // Create default preferences
-    db.prepare(`
+    await db.query(`
       INSERT INTO user_preferences (id, user_id)
-      VALUES (?, ?)
-    `).run(uuidv4(), userId);
+      VALUES ($1, $2)
+    `, [uuidv4(), userId]);
 
-    const newUser = db.prepare('SELECT id, name, email, role, status, joined FROM users WHERE id = ?').get(userId);
+    const newUserResult = await db.query('SELECT id, name, email, role, status, joined FROM users WHERE id = $1', [userId]);
+    const newUser = newUserResult.rows[0];
 
     res.status(201).json(newUser);
   } catch (error) {

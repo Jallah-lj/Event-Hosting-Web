@@ -1,21 +1,22 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/init.js';
+import db from '../db/index.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Get promo codes (Organizer sees their own, Admin sees all)
-router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    let promos;
-    
+    let promosResult;
+
     if (req.user.role === 'ADMIN') {
-      promos = db.prepare('SELECT * FROM promo_codes ORDER BY created_at DESC').all();
+      promosResult = await db.query('SELECT * FROM promo_codes ORDER BY created_at DESC');
     } else {
-      promos = db.prepare('SELECT * FROM promo_codes WHERE organizer_id = ? ORDER BY created_at DESC')
-        .all(req.user.id);
+      promosResult = await db.query('SELECT * FROM promo_codes WHERE organizer_id = $1 ORDER BY created_at DESC', [req.user.id]);
     }
+
+    const promos = promosResult.rows;
 
     res.json(promos.map(p => ({
       id: p.id,
@@ -34,7 +35,7 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res)
 });
 
 // Create promo code
-router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { code, type, value, limit, eventId } = req.body;
 
@@ -44,10 +45,10 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 
     const promoId = uuidv4();
 
-    db.prepare(`
+    await db.query(`
       INSERT INTO promo_codes (id, code, type, value, usage_count, usage_limit, status, organizer_id, event_id)
-      VALUES (?, ?, ?, ?, 0, ?, 'ACTIVE', ?, ?)
-    `).run(promoId, code.toUpperCase(), type, value, limit || null, req.user.id, eventId || null);
+      VALUES ($1, $2, $3, $4, 0, $5, 'ACTIVE', $6, $7)
+    `, [promoId, code.toUpperCase(), type, value, limit || null, req.user.id, eventId || null]);
 
     res.status(201).json({
       message: 'Promo code created',
@@ -60,14 +61,14 @@ router.post('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res
 });
 
 // Update promo code
-router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
     const { status, limit } = req.body;
 
-    db.prepare(`
-      UPDATE promo_codes SET status = COALESCE(?, status), usage_limit = COALESCE(?, usage_limit)
-      WHERE id = ? AND (organizer_id = ? OR ? = 'ADMIN')
-    `).run(status, limit, req.params.id, req.user.id, req.user.role);
+    await db.query(`
+      UPDATE promo_codes SET status = COALESCE($1, status), usage_limit = COALESCE($2, usage_limit)
+      WHERE id = $3 AND (organizer_id = $4 OR $5 = 'ADMIN')
+    `, [status, limit, req.params.id, req.user.id, req.user.role]);
 
     res.json({ message: 'Promo code updated' });
   } catch (error) {
@@ -77,10 +78,12 @@ router.put('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, r
 });
 
 // Delete promo code
-router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req, res) => {
   try {
-    db.prepare('DELETE FROM promo_codes WHERE id = ? AND (organizer_id = ? OR ? = \'ADMIN\')')
-      .run(req.params.id, req.user.id, req.user.role);
+    await db.query(`
+      DELETE FROM promo_codes 
+      WHERE id = $1 AND (organizer_id = $2 OR $3 = 'ADMIN')
+    `, [req.params.id, req.user.id, req.user.role]);
     res.json({ message: 'Promo code deleted' });
   } catch (error) {
     console.error('Delete promo error:', error);
@@ -89,16 +92,18 @@ router.delete('/:id', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), (req
 });
 
 // Validate promo code
-router.post('/validate', authenticateToken, (req, res) => {
+router.post('/validate', authenticateToken, async (req, res) => {
   try {
     const { code, eventId } = req.body;
 
-    const promo = db.prepare(`
+    const promoResult = await db.query(`
       SELECT * FROM promo_codes 
-      WHERE code = ? AND status = 'ACTIVE' 
-      AND (event_id IS NULL OR event_id = ?)
+      WHERE code = $1 AND status = 'ACTIVE' 
+      AND (event_id IS NULL OR event_id = $2)
       AND (usage_limit IS NULL OR usage_count < usage_limit)
-    `).get(code.toUpperCase(), eventId);
+    `, [code.toUpperCase(), eventId]);
+
+    const promo = promoResult.rows[0];
 
     if (!promo) {
       return res.status(404).json({ error: 'Invalid or expired promo code' });
