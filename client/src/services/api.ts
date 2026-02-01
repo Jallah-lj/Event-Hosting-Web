@@ -1,10 +1,18 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
 // Use environment variable, or fallback to production URL, or local development
-let rawBaseUrl = (import.meta as any).env.VITE_API_URL
-  || (window.location.hostname !== 'localhost'
-    ? 'https://event-hosting-web.onrender.com/api'
-    : 'http://localhost:5000/api');
+const envApiUrl = (import.meta as any).env.VITE_API_URL;
+let rawBaseUrl = envApiUrl;
+
+// Determine the correct API base URL based on the environment
+if (window.location.hostname === 'localhost') {
+  // Local development
+  rawBaseUrl = envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : 'http://localhost:5000/api';
+} else {
+  // Production / Preview environments
+  // Use VITE_API_URL if it's an absolute URL, otherwise fallback to the production Render URL
+  rawBaseUrl = envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : 'https://event-hosting-web.onrender.com/api';
+}
 
 // Robustness: Ensure the URL ends with /api if it doesn't already
 if (rawBaseUrl && !rawBaseUrl.endsWith('/api') && !rawBaseUrl.endsWith('/api/')) {
