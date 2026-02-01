@@ -52,16 +52,16 @@ const LandingPage: React.FC = () => {
             <span className="font-serif text-lg md:text-xl font-bold text-white hidden sm:block shadow-sm">LiberiaConnect</span>
           </div>
           <div className="flex space-x-2 md:space-x-4">
-            <Link 
+            <Link
               to="/auth/signin"
               className="text-white font-medium hover:text-blue-200 transition-colors text-sm md:text-base px-3 py-1"
             >
               Sign In
             </Link>
-            <Button 
-              variant="primary" 
-              size="sm" 
-              className="bg-white text-liberia-blue hover:bg-blue-50 border-none shadow-lg text-xs md:text-sm font-bold"
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/10 text-white border-white hover:bg-white/20 shadow-lg text-xs md:text-sm font-bold"
               onClick={() => navigate('/auth/signup')}
             >
               Register
@@ -118,14 +118,14 @@ const LandingPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {events.map(event => (
-              <Link 
+              <Link
                 key={event.id}
                 to={`/events/${event.id}`}
                 className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
               >
                 <div className="h-48 bg-gray-200 relative overflow-hidden">
-                  <img 
-                    src={event.imageUrl || `https://picsum.photos/seed/${event.id}/400/250`} 
+                  <img
+                    src={event.imageUrl || `https://picsum.photos/seed/${event.id}/400/250`}
                     alt={event.title}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 ease-in-out"
                   />
@@ -133,17 +133,17 @@ const LandingPage: React.FC = () => {
                     Starts from ${event.price}
                   </div>
                 </div>
-                
+
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
                     <span className="inline-block px-2 py-1 rounded-md bg-blue-50 text-liberia-blue text-xs font-bold uppercase tracking-wider">
                       {event.category}
                     </span>
                   </div>
-                  
+
                   <h3 className="text-xl font-serif font-bold text-gray-900 mb-2 group-hover:text-liberia-blue transition-colors">{event.title}</h3>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{event.description}</p>
-                  
+
                   <div className="space-y-2 pt-4 border-t border-gray-50">
                     <div className="flex items-center text-sm text-gray-500">
                       <Calendar className="w-4 h-4 mr-2 text-liberia-red" />
@@ -165,7 +165,7 @@ const LandingPage: React.FC = () => {
             ))}
           </div>
         )}
-        
+
         <div className="mt-12 text-center md:hidden">
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/auth/signup')}>
             View all events
@@ -210,7 +210,7 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Dev Login Shortcuts */}
       <footer className="mt-auto bg-gray-900 text-gray-400 py-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">

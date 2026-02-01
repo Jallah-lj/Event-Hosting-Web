@@ -17,6 +17,7 @@ const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<UserRole>(UserRole.ATTENDEE);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +36,7 @@ const SignUp: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await signUp(name, email, password, UserRole.ATTENDEE);
+      await signUp(name, email, password, role);
       addToast('Account created successfully!', 'success');
       // Navigation handled by App.tsx
     } catch (error) {
@@ -131,6 +132,32 @@ const SignUp: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">I am an:</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setRole(UserRole.ATTENDEE)}
+                className={`py-2 px-4 rounded-lg border-2 text-sm font-bold transition-all ${role === UserRole.ATTENDEE
+                    ? 'border-liberia-blue bg-blue-50 text-liberia-blue'
+                    : 'border-gray-200 text-gray-500 hover:border-blue-200'
+                  }`}
+              >
+                Attendee
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole(UserRole.ORGANIZER)}
+                className={`py-2 px-4 rounded-lg border-2 text-sm font-bold transition-all ${role === UserRole.ORGANIZER
+                    ? 'border-liberia-red bg-red-50 text-liberia-red'
+                    : 'border-gray-200 text-gray-500 hover:border-red-200'
+                  }`}
+              >
+                Organizer
+              </button>
             </div>
           </div>
 

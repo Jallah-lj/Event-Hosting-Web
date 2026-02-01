@@ -64,10 +64,10 @@ const AdminDashboard: React.FC = () => {
 
 
   const stats = [
-    { label: 'Total Users', value: users.length, icon: Users, color: 'blue' },
-    { label: 'Total Events', value: events.length, icon: Calendar, color: 'green' },
-    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'yellow' },
-    { label: 'Pending Approval', value: pendingEvents.length, icon: Clock, color: 'orange' },
+    { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-500' },
+    { label: 'Total Events', value: events.length, icon: Calendar, color: 'text-green-500' },
+    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-yellow-500' },
+    { label: 'Pending Approval', value: pendingEvents.length, icon: Clock, color: 'text-orange-500' },
   ];
 
   if (loading) {
@@ -108,7 +108,7 @@ const AdminDashboard: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</span>
-              <stat.icon className={`w-5 h-5 text-${stat.color}-500`} />
+              <stat.icon className={`w-5 h-5 ${stat.color}`} />
             </div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
           </div>

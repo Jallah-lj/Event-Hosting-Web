@@ -12,7 +12,7 @@ const router = express.Router();
 // Sign Up
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -24,12 +24,17 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
+    // Role validation: Only allow ATTENDEE or ORGANIZER for public signup
+    let userRole = 'ATTENDEE';
+    if (role && ['ATTENDEE', 'ORGANIZER'].includes(role)) {
+      userRole = role;
+    }
+
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
     const userId = uuidv4();
-    const userRole = 'ATTENDEE'; // Force default role to ATTENDEE for public signup
 
     await db.query(`
       INSERT INTO users (id, name, email, password_hash, role, status, joined)
@@ -42,10 +47,15 @@ router.post('/signup', async (req, res) => {
       VALUES ($1, $2)
     `, [uuidv4(), userId]);
 
-    // Generate token
+    // Generate token - NO fallback secret for production for better security
+    const secret = process.env.JWT_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET is not configured for production');
+    }
+
     const token = jwt.sign(
       { id: userId, email, role: userRole },
-      process.env.JWT_SECRET || 'fallback-secret',
+      secret || 'dev-only-fallback-secret',
       { expiresIn: '7d' }
     );
 

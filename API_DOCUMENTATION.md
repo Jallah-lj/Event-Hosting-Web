@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:5000/api
+{{API_BASE_URL}}/api
 ```
 
 ## Authentication

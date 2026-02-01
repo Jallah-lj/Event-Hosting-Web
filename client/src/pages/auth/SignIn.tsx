@@ -149,12 +149,12 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="mt-6 pt-6 border-t">
-          <p className="text-xs text-center text-gray-400 mb-3">Demo Accounts:</p>
-          <div className="text-xs text-center text-gray-500 space-y-1">
+          <p className="text-xs text-center text-gray-500 font-medium mb-3">Demo Accounts:</p>
+          <div className="text-xs text-center text-gray-600 space-y-1">
             <p>Admin: admin@liberiaconnect.com</p>
             <p>Organizer: org@example.com</p>
             <p>Attendee: attendee@example.com</p>
-            <p className="text-gray-400">Password: demo123</p>
+            <p className="text-gray-500 font-medium">Password: demo123</p>
           </div>
         </div>
       </div>

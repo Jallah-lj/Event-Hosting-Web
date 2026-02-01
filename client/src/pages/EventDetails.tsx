@@ -46,7 +46,7 @@ const EventDetails: React.FC = () => {
   const handlePurchase = async () => {
     if (!isAuthenticated) {
       addToast('Please sign in to purchase tickets', 'info');
-      navigate('/signin');
+      navigate('/auth/signin');
       return;
     }
 
