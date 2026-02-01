@@ -180,15 +180,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-2 mr-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+              className="p-2 -ml-2 mr-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md active:bg-gray-200 dark:active:bg-gray-600 transition-colors"
+              aria-label="Open menu"
             >
               <Menu size={24} />
             </button>
-            <span className="font-serif font-bold text-liberia-blue dark:text-blue-400 text-lg truncate">LiberiaConnect</span>
+            <span className="font-serif font-bold text-liberia-blue dark:text-blue-400 text-lg sm:text-xl truncate">LiberiaConnect</span>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

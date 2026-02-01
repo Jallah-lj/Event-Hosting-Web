@@ -56,7 +56,7 @@ const SignUp: React.FC = () => {
         </Link>
       </div>
 
-      <div className="bg-white/90 p-10 rounded-3xl shadow-2xl w-full max-w-md border-t-4 border-liberia-red z-10 backdrop-blur-xl animate-fade-in">
+      <div className="bg-white/90 p-6 sm:p-10 rounded-3xl shadow-2xl w-[calc(100%-2rem)] max-w-md border-t-4 border-liberia-red z-10 backdrop-blur-xl animate-fade-in">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-liberia-blue to-liberia-red text-white rounded-full flex items-center justify-center mx-auto mb-4 font-serif font-bold text-3xl border-4 border-gray-100 shadow-lg animate-bounce-slow">
             LC

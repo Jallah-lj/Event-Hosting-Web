@@ -1,25 +1,39 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
-// Use environment variable, or fallback to production URL, or local development
+// Get API URL from environment variables
 const envApiUrl = (import.meta as any).env.VITE_API_URL;
-let rawBaseUrl = envApiUrl;
 
-// Determine the correct API base URL based on the environment
-if (window.location.hostname === 'localhost') {
-  // Local development
-  rawBaseUrl = envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : 'http://localhost:5000/api';
-} else {
-  // Production / Preview environments
-  // Use VITE_API_URL if it's an absolute URL, otherwise fallback to the production Render URL
-  rawBaseUrl = envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : 'https://event-hosting-web.onrender.com/api';
-}
+/**
+ * Determine the API Base URL.
+ * Priority:
+ * 1. VITE_API_URL environment variable
+ * 2. If on localhost, fallback to local backend
+ * 3. Default to relative /api (works if served from same origin or proxied)
+ */
+const getBaseUrl = () => {
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+
+  if (window.location.hostname === 'localhost') {
+    return 'http://localhost:5000/api';
+  }
+
+  // Fallback for the known production deployment if no env var is provided
+  // This helps when deploying to platforms where env vars might be missed in initial setup
+  if (window.location.hostname.includes('vercel.app')) {
+    return 'https://event-hosting-web.onrender.com/api';
+  }
+
+  return '/api';
+};
+
+let API_BASE_URL = getBaseUrl();
 
 // Robustness: Ensure the URL ends with /api if it doesn't already
-if (rawBaseUrl && !rawBaseUrl.endsWith('/api') && !rawBaseUrl.endsWith('/api/')) {
-  rawBaseUrl = rawBaseUrl.endsWith('/') ? `${rawBaseUrl}api` : `${rawBaseUrl}/api`;
+if (API_BASE_URL && !API_BASE_URL.endsWith('/api') && !API_BASE_URL.endsWith('/api/')) {
+  API_BASE_URL = API_BASE_URL.endsWith('/') ? `${API_BASE_URL}api` : `${API_BASE_URL}/api`;
 }
-
-const API_BASE_URL = rawBaseUrl;
 
 // Create axios instance
 const api = axios.create({

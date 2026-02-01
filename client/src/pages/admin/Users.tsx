@@ -179,7 +179,7 @@ const AdminUsers: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Joined
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -220,7 +220,7 @@ const AdminUsers: React.FC = () => {
                       {user.status || 'Active'}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="hidden sm:table-cell px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
                     {user.joined ? new Date(user.joined).toLocaleDateString() : 'N/A'}
                   </td>
                   <td className="px-4 py-4">

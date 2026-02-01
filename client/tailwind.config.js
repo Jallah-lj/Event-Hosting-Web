@@ -7,6 +7,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+      },
       colors: {
         'liberia-blue': '#002868',
         'liberia-red': '#BF0A30',
