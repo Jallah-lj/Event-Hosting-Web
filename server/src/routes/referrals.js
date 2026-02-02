@@ -25,7 +25,7 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req
       url: r.url,
       clicks: r.clicks,
       sales: r.sales,
-      revenue: r.revenue
+      revenue: parseFloat(r.revenue)
     })));
   } catch (error) {
     console.error('Get referrals error:', error);

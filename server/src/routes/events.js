@@ -40,7 +40,7 @@ router.get('/', optionalAuth, async (req, res) => {
         endDate: event.end_date,
         location: event.location,
         category: event.category,
-        price: event.price,
+        price: parseFloat(event.price),
         capacity: event.capacity,
         status: event.status,
         organizerId: event.organizer_id,
@@ -49,7 +49,7 @@ router.get('/', optionalAuth, async (req, res) => {
         ticketTiers: tiers.map(t => ({
           id: t.id,
           name: t.name,
-          price: t.price,
+          price: parseFloat(t.price),
           description: t.description,
           allocation: t.allocation
         }))
@@ -86,7 +86,7 @@ router.get('/organizer/:id', authenticateToken, async (req, res) => {
         endDate: event.end_date,
         location: event.location,
         category: event.category,
-        price: event.price,
+        price: parseFloat(event.price),
         capacity: event.capacity,
         status: event.status,
         organizerId: event.organizer_id,
@@ -95,7 +95,7 @@ router.get('/organizer/:id', authenticateToken, async (req, res) => {
         ticketTiers: tiers.map(t => ({
           id: t.id,
           name: t.name,
-          price: t.price,
+          price: parseFloat(t.price),
           description: t.description,
           allocation: t.allocation
         }))
@@ -137,7 +137,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       endDate: event.end_date,
       location: event.location,
       category: event.category,
-      price: event.price,
+      price: parseFloat(event.price),
       capacity: event.capacity,
       status: event.status,
       organizerId: event.organizer_id,
@@ -146,7 +146,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       ticketTiers: tiers.map(t => ({
         id: t.id,
         name: t.name,
-        price: t.price,
+        price: parseFloat(t.price),
         description: t.description,
         allocation: t.allocation
       }))
