@@ -148,6 +148,10 @@ export interface User {
   phone?: string;
   role: UserRole;
   profilePicture?: string;
+  organizationName?: string;
+  organizationDescription?: string;
+  organizationWebsite?: string;
+  organizationLogo?: string;
   status?: 'Active' | 'Suspended';
   verified?: boolean;
   joined?: string;

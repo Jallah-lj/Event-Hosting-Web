@@ -33,10 +33,10 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ events }) => {
 
   // Initialize Chat Session with System Instruction containing Event Data
   const initChat = async () => {
-    const apiKey = process.env.API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) return;
 
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI(apiKey);
     
     // Create a summarized context of events to save tokens
     const eventContext = events.map(e => 
@@ -63,7 +63,7 @@ export const AIChatBot: React.FC<AIChatBotProps> = ({ events }) => {
 
     try {
         chatSessionRef.current = ai.chats.create({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             config: {
                 systemInstruction: systemInstruction,
             },

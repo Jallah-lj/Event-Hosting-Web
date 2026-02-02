@@ -3,7 +3,7 @@
 // This replaces the monolithic OrganizerPanel.tsx (1401 lines)
 
 import React, { useState, useEffect } from 'react';
-import { Event, Ticket, PromoCode, Referral, Broadcast, TeamMember, Transaction } from '../../types';
+import { Event, Ticket, PromoCode, Referral, Broadcast, TeamMember, Transaction } from '../types';
 import { Button } from '../components/Button';
 import { useToast } from '../components/Toast';
 import {

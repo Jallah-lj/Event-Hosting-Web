@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
-  User, Lock, Bell, Monitor, Upload, CreditCard, Shield, Trash2, Download, Moon, Sun, Phone, Calendar, Globe, Loader2, X, Eye, EyeOff
+  User, Lock, Bell, Monitor, Upload, Moon, Sun, Phone, Loader2, X, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +20,6 @@ const AttendeeSettings_IMPROVED: React.FC = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || '');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profilePicture ? 
     (user.profilePicture.startsWith('/') ? `http://localhost:5000${user.profilePicture}` : user.profilePicture) 
     : null);
@@ -38,8 +37,6 @@ const AttendeeSettings_IMPROVED: React.FC = () => {
   // States
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
 
   // Preferences
@@ -110,7 +107,6 @@ const AttendeeSettings_IMPROVED: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setAvatarUrl(response.data.avatarUrl);
       if (user) {
         updateUser({ ...user, profilePicture: response.data.avatarUrl });
       }
@@ -165,7 +161,6 @@ const AttendeeSettings_IMPROVED: React.FC = () => {
     setUploadingAvatar(true);
     try {
       await api.delete('/upload/avatar');
-      setAvatarUrl('');
       setAvatarPreview(null);
       if (user) {
         updateUser({ ...user, profilePicture: undefined });

@@ -1,6 +1,5 @@
 import { forwardRef } from 'react';
 import QRCode from 'react-qr-code';
-import { MapPin, User, Star, Calendar, DollarSign } from 'lucide-react';
 import { formatTicketDate, formatPrice, formatTicketStatus } from '../utils/ticketFormatter';
 
 interface Sponsor {
@@ -37,7 +36,6 @@ interface PrintableTicketProps {
 
 const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps>(
   ({ ticket, event, attendeeEmail, currency = 'USD' }, ref) => {
-    const currencySymbol = currency === 'LRD' ? 'L$' : '$';
     
     // Safe date formatting with error handling
     const eventDate = (() => {
@@ -154,7 +152,7 @@ const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps
                     gap: '8px',
                     flexWrap: 'wrap'
                   }}>
-                    <span>📅 {typeof eventDate === 'string' ? eventDate : `${eventDate.day}, ${eventDate.month} ${eventDate.date}, ${eventDate.year}`}</span>
+                    <span>📅 {typeof eventDate === 'string' ? eventDate : eventDate.fullDate}</span>
                     {event.organizerName && <span>• {event.organizerName}</span>}
                   </p>
                 </div>
@@ -171,7 +169,6 @@ const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps
                     value={qrValue}
                     size={120}
                     level="H"
-                    includeMargin={false}
                     fgColor="#002868"
                     bgColor="#ffffff"
                   />
@@ -302,7 +299,7 @@ const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps
                     PURCHASE DATE
                   </p>
                   <p style={{ margin: '0', color: '#1f2937', fontSize: '14px', fontWeight: '600' }}>
-                    {purchaseDate}
+                    {typeof purchaseDate === 'string' ? purchaseDate : purchaseDate.fullDate}
                   </p>
                 </div>
               </div>
@@ -326,7 +323,7 @@ const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps
                   fontSize: '14px',
                   fontWeight: '600'
                 }}>
-                  STATUS: {ticketStatus}
+                  STATUS: {ticketStatus.label}
                 </p>
                 {ticket.used && checkInDate && (
                   <p style={{
@@ -334,7 +331,7 @@ const PrintableTicket_IMPROVED = forwardRef<HTMLDivElement, PrintableTicketProps
                     color: ticket.used ? '#7f1d1d' : '#15803d',
                     fontSize: '12px'
                   }}>
-                    Checked in: {checkInDate}
+                    Checked in: {typeof checkInDate === 'string' ? checkInDate : checkInDate.fullDateTime}
                   </p>
                 )}
               </div>

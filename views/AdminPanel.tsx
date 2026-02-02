@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Event, PlatformSettings, ViewState, Ticket, User, Transaction } from '../../types';
+import { Event, PlatformSettings, ViewState, Ticket, User, Transaction } from '../types';
 import { Button } from '../components/Button';
 import {
     Download, DollarSign, Ticket as TicketIcon, Users, Calendar,

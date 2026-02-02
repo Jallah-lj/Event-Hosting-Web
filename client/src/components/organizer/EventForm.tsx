@@ -1,8 +1,8 @@
 // @components/organizer/EventForm.tsx
 // Reusable event form component for create/edit operations
 
-import React, { useState, useEffect } from 'react';
-import { Event, TicketTier } from '../../types';
+import React, { useState } from 'react';
+import { Event } from '../../types';
 import { Button } from '../Button';
 import { Plus, Trash2, Wand2, ImagePlus, Loader2 } from 'lucide-react';
 import { useToast } from '../Toast';
@@ -297,7 +297,7 @@ const EventForm: React.FC<EventFormProps> = ({ event, onSubmit, onCancel, isLoad
         </div>
 
         <div className="space-y-4">
-          {formData.ticketTiers.map((tier, idx) => (
+          {formData.ticketTiers.map((tier) => (
             <div key={tier.id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input

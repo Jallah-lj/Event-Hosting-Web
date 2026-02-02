@@ -1,20 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  User, Upload, Lock, Bell, CreditCard, Settings, LogOut, Loader2, X, Eye, EyeOff,
-  Globe, DollarSign, Zap, FileText, Shield, MoreVertical, Edit, Trash2, Plus, AlertCircle, CheckCircle
+  User, Upload, Lock, Bell, CreditCard, Loader2, X, Eye, EyeOff,
+  Globe, DollarSign, Zap, FileText, Trash2, Plus, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
-import { useNavigate } from 'react-router-dom';
 import usersService from '../../services/usersService';
 import authService from '../../services/authService';
 import api, { getErrorMessage } from '../../services/api';
 
 const OrganizerSettings_IMPROVED: React.FC = () => {
-  const { user, updateUser, logout } = useAuth();
+  const { user, updateUser } = useAuth();
   const { addToast } = useToast();
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoUploadRef = useRef<HTMLInputElement>(null);
   const dragZoneRef = useRef<HTMLDivElement>(null);
@@ -25,7 +23,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
   // Profile state
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [avatarUrl, setAvatarUrl] = useState(user?.profilePicture || '');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.profilePicture ? 
     (user.profilePicture.startsWith('/') ? `http://localhost:5000${user.profilePicture}` : user.profilePicture) 
     : null);
@@ -35,7 +32,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
   const [orgName, setOrgName] = useState(user?.organizationName || '');
   const [orgDescription, setOrgDescription] = useState(user?.organizationDescription || '');
   const [orgWebsite, setOrgWebsite] = useState(user?.organizationWebsite || '');
-  const [orgLogo, setOrgLogo] = useState<string | null>(user?.organizationLogo || null);
   const [orgLogoPreview, setOrgLogoPreview] = useState<string | null>(user?.organizationLogo ? 
     (user.organizationLogo.startsWith('/') ? `http://localhost:5000${user.organizationLogo}` : user.organizationLogo) 
     : null);
@@ -120,7 +116,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setAvatarUrl(response.data.avatarUrl);
       if (user) {
         updateUser({ ...user, profilePicture: response.data.avatarUrl });
       }
@@ -165,7 +160,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setOrgLogo(response.data.logoUrl);
       if (user) {
         updateUser({ ...user, organizationLogo: response.data.logoUrl });
       }
@@ -390,7 +384,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setAvatarPreview(null);
-                          setAvatarUrl('');
                         }}
                         disabled={uploadingAvatar}
                         className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded transition-colors disabled:opacity-50"
@@ -507,7 +500,6 @@ const OrganizerSettings_IMPROVED: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setOrgLogoPreview(null);
-                          setOrgLogo(null);
                         }}
                         disabled={uploadingLogo}
                         className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded transition-colors disabled:opacity-50"

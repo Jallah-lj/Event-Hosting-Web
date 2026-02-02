@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../components/Button';
-import { UserRole, Event } from '../../types';
+import { UserRole, Event } from '../types';
 import { Calendar, MapPin, ArrowRight, ExternalLink } from 'lucide-react';
 
 interface LandingPageProps {

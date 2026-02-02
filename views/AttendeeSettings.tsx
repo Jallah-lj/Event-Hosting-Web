@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, UserPreferences } from '../../types';
+import { User, UserPreferences } from '../types';
 import { Button } from '../components/Button';
 import { User as UserIcon, Bell, Shield, Mail, Phone, Save, Moon, Sun, Camera, Lock, Key, Trash2, CreditCard, Smartphone, Globe, DollarSign, Clock, AlertTriangle, Type, Calendar as CalendarIcon, WifiOff } from 'lucide-react';
 import { useToast } from '../components/Toast';

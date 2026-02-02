@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
-import { UserRole } from '../../types';
+import { UserRole } from '../types';
 import { ArrowLeft, Mail, Lock, User, ChevronRight, LogOut, CheckCircle, Key, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../components/Toast';
 

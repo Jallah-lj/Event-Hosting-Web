@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   CheckCircle, XCircle, RefreshCw, QrCode, Camera, AlertTriangle,
   Volume2, VolumeX, Clock, Search, Loader
@@ -142,11 +142,11 @@ const TicketScanner_IMPROVED: React.FC<TicketScannerProps> = ({
     setCameraError(null);
 
     if (error.includes('NotAllowedError')) {
-      setCameraError(SCANNER_ERRORS.PERMISSION_DENIED.message);
-      setErrorMsg(SCANNER_ERRORS.PERMISSION_DENIED.message);
+      setCameraError(SCANNER_ERRORS.CAMERA_PERMISSION_DENIED.message);
+      setErrorMsg(SCANNER_ERRORS.CAMERA_PERMISSION_DENIED.message);
     } else if (error.includes('NotFoundError')) {
-      setCameraError(SCANNER_ERRORS.NO_CAMERA.message);
-      setErrorMsg(SCANNER_ERRORS.NO_CAMERA.message);
+      setCameraError(SCANNER_ERRORS.CAMERA_NOT_FOUND.message);
+      setErrorMsg(SCANNER_ERRORS.CAMERA_NOT_FOUND.message);
     } else if (error.includes('NotReadableError')) {
       setCameraError(SCANNER_ERRORS.CAMERA_IN_USE.message);
       setErrorMsg(SCANNER_ERRORS.CAMERA_IN_USE.message);
@@ -163,7 +163,7 @@ const TicketScanner_IMPROVED: React.FC<TicketScannerProps> = ({
     try {
       // Sanitize and validate input
       const sanitized = sanitizeTicketId(result);
-      if (!sanitized || !validateTicketId(sanitized)) {
+      if (!sanitized || !validateTicketId(sanitized).valid) {
         setErrorMsg(SCANNER_ERRORS.INVALID_FORMAT.message);
         setScanStatus('ERROR');
         if (soundEnabled) playTicketSound('error');
@@ -202,7 +202,9 @@ const TicketScanner_IMPROVED: React.FC<TicketScannerProps> = ({
         const event = events.find(e => e.id === ticket.eventId);
         if (event) setScannedEvent(event);
         setScanStatus('ALREADY_USED');
-        setErrorMsg(`Ticket already checked in at ${formatTicketDate(ticket.checkInTime || '')}`);
+        const d = formatTicketDate(ticket.checkInTime || '');
+        const dateStr = typeof d === 'string' ? d : d.fullDate;
+        setErrorMsg(`Ticket already checked in at ${dateStr}`);
         if (soundEnabled) playTicketSound('error');
         addRecentScan(ticket.id, 'ALREADY_USED', ticket.attendeeName || ticket.userName || 'Unknown');
         return;
@@ -295,7 +297,12 @@ const TicketScanner_IMPROVED: React.FC<TicketScannerProps> = ({
         {targetEvent && (
           <div className="bg-white rounded-lg shadow-md p-4 mb-6 border-l-4 border-blue-600">
             <h3 className="font-semibold text-gray-900">{targetEvent.title}</h3>
-            <p className="text-sm text-gray-600">{formatTicketDate(targetEvent.date)} • {targetEvent.location}</p>
+            <p className="text-sm text-gray-600">
+              {(() => {
+                const d = formatTicketDate(targetEvent.date);
+                return typeof d === 'string' ? d : d.fullDate;
+              })()} • {targetEvent.location}
+            </p>
           </div>
         )}
 
