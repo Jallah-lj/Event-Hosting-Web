@@ -154,8 +154,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     // View Renderers
     const renderAnalytics = () => {
-        const realRevenue = tickets.reduce((sum, t) => sum + (t.pricePaid || 0), 0);
-        const realTicketsSold = tickets.length;
+        const realRevenue = (tickets || []).reduce((sum, t) => sum + (Number(t.pricePaid) || 0), 0);
+        const realTicketsSold = (tickets || []).length;
 
         return (
             <div className="space-y-6 animate-in fade-in">
@@ -285,9 +285,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                     {tx.description}
                                 </td>
-                                <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{users.find(u => u.id === tx.organizerId)?.name || 'Unknown'}</td>
-                                <td className={`px-6 py-4 text-right font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-gray-900 dark:text-white'}`}>
-                                    {tx.amount > 0 ? '+' : ''}{settings.currency === 'USD' ? '$' : 'L$'}{Math.abs(tx.amount).toFixed(2)}
+                                <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{(users || []).find(u => u && u.id === tx.organizerId)?.name || 'Unknown'}</td>
+                                <td className={`px-6 py-4 text-right font-bold ${(Number(tx.amount) || 0) > 0 ? 'text-green-600' : 'text-gray-900 dark:text-white'}`}>
+                                    {(Number(tx.amount) || 0) > 0 ? '+' : ''}{settings.currency === 'USD' ? '$' : 'L$'}{Math.abs(Number(tx.amount) || 0).toFixed(2)}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${tx.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :

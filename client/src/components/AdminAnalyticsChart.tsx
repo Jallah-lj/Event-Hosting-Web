@@ -48,13 +48,13 @@ const AdminAnalyticsChart: React.FC = () => {
             const eventGrowth = 15.7;
 
             // Revenue by month
-            const revenueByMonth = calculateRevenueByMonth(transactions.data);
+            const revenueByMonth = calculateRevenueByMonth(transactions.data || []);
 
             // Users by role
-            const usersByRole = calculateUsersByRole(users.data);
+            const usersByRole = calculateUsersByRole(users.data || []);
 
             // Events by category
-            const eventsByCategory = calculateEventsByCategory(events.data);
+            const eventsByCategory = calculateEventsByCategory(events.data || []);
 
             setData({
                 totalRevenue,
@@ -102,16 +102,20 @@ const AdminAnalyticsChart: React.FC = () => {
 
     const calculateUsersByRole = (users: any[]) => {
         const roleCounts: { [key: string]: number } = {};
-        users.forEach(u => {
-            roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+        (users || []).forEach(u => {
+            if (u && u.role) {
+                roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+            }
         });
         return Object.entries(roleCounts).map(([role, count]) => ({ role, count }));
     };
 
     const calculateEventsByCategory = (events: any[]) => {
         const categoryCounts: { [key: string]: number } = {};
-        events.forEach(e => {
-            categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+        (events || []).forEach(e => {
+            if (e && e.category) {
+                categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+            }
         });
         return Object.entries(categoryCounts).map(([category, count]) => ({ category, count }));
     };
