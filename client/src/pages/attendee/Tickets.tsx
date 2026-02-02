@@ -123,10 +123,10 @@ const AttendeeTickets: React.FC = () => {
           {tickets.map(ticket => (
             <div
               key={ticket.id}
-              className={`bg - white dark: bg - gray - 800 rounded - xl overflow - hidden border ${ticket.used
+              className={`bg-white dark:bg-gray-800 rounded-xl overflow-hidden border ${ticket.used
                   ? 'border-gray-200 dark:border-gray-700 opacity-60'
                   : 'border-green-200 dark:border-green-800'
-                } `}
+                }`}
             >
               <div className="relative h-24 sm:h-32 bg-gray-100 dark:bg-gray-700">
                 {ticket.event?.imageUrl ? (
@@ -150,10 +150,10 @@ const AttendeeTickets: React.FC = () => {
                     </h3>
                   </div>
                 </div>
-                <span className={`absolute top - 2 right - 2 px - 2 py - 1 rounded - full text - xs font - bold uppercase tracking - wider ${ticket.used
+                <span className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${ticket.used
                     ? 'bg-gray-100 text-gray-600'
                     : 'bg-green-100 text-green-700'
-                  } `}>
+                  }`}>
                   {ticket.used ? 'Used' : 'Valid'}
                 </span>
               </div>
