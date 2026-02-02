@@ -13,13 +13,13 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import AttendeeDashboard from './pages/attendee/Dashboard';
 import AttendeeSchedule from './pages/attendee/Schedule';
 import AttendeeTickets from './pages/attendee/Tickets';
-import AttendeeSettings from './pages/attendee/Settings';
+import AttendeeSettings from './pages/attendee/Settings_IMPROVED';
 
 import OrganizerDashboard from './pages/organizer/Dashboard';
-import OrganizerCreateEvent from './pages/organizer/CreateEvent';
+import OrganizerCreateEvent from './pages/organizer/CreateEvent_IMPROVED';
 import OrganizerScanner from './pages/organizer/Scanner';
 import OrganizerAttendees from './pages/organizer/Attendees';
-import OrganizerSettings from './pages/organizer/Settings';
+import OrganizerSettings from './pages/organizer/Settings_IMPROVED';
 import TeamManagement from './pages/organizer/TeamManagement';
 
 import ScannerDashboard from './pages/scanner/Dashboard';
