@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Event, TicketTier, UserRole } from '../../types';
+import { Event, TicketTier, UserRole } from '../types';
 import { Button } from '../components/Button';
 import { PaymentModal } from '../components/PaymentModal';
 import { Calendar, MapPin, ArrowLeft, Clock, Share2, Users, CheckCircle, Tag, Plus, Minus, LogIn } from 'lucide-react';

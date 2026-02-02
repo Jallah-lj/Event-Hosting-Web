@@ -45,6 +45,24 @@ export const SCANNER_ERRORS = {
     severity: 'warning' as const,
     recoverable: true
   },
+  INVALID_FORMAT: {
+    code: 'INVALID_FORMAT',
+    message: 'Invalid ticket ID format',
+    severity: 'error' as const,
+    recoverable: true
+  },
+  VERIFICATION_FAILED: {
+    code: 'VERIFICATION_FAILED',
+    message: 'Ticket verification failed',
+    severity: 'error' as const,
+    recoverable: true
+  },
+  CAMERA_IN_USE: {
+    code: 'CAMERA_IN_USE',
+    message: 'Camera is already in use by another application',
+    severity: 'error' as const,
+    recoverable: false
+  },
   NETWORK_ERROR: {
     code: 'NETWORK_ERROR',
     message: 'Network error. Please try again',

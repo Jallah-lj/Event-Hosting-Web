@@ -1,48 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Plus, Trash2, Clock, Tag, Globe, X, ChevronDown, ChevronUp, Upload, Image as ImageIcon
+  ArrowLeft, Plus, Trash2, X, ChevronDown, ChevronUp, Upload, Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/Toast';
-import { TicketTier, Sponsor, SocialLinks, ContactInfo } from '../../types';
+import { TicketTier } from '../../types';
 import eventsService from '../../services/eventsService';
 import api, { getErrorMessage } from '../../services/api';
 
 const categories = ['Culture', 'Business', 'Music', 'Sports', 'Education', 'Technology', 'Food', 'Art'];
 
-interface ScheduleItem {
-  id: string;
-  time: string;
-  endTime: string;
-  title: string;
-  description: string;
-  speaker: string;
-}
-
-interface Speaker {
-  id: string;
-  name: string;
-  role: string;
-  bio: string;
-  imageUrl: string;
-}
-
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-}
-
-interface PromoCode {
-  id: string;
-  code: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  maxUses: number;
-  expiryDate: string;
-}
 
 const CreateEvent_IMPROVED: React.FC = () => {
   const { id } = useParams();
@@ -93,24 +62,6 @@ const CreateEvent_IMPROVED: React.FC = () => {
     flyerUrl: '' // New field for flyer
   });
 
-  const [tagInput, setTagInput] = useState('');
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-  const [speakers, setSpeakers] = useState<Speaker[]>([]);
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
-
-  const [socialLinks, setSocialLinks] = useState<SocialLinks>({
-    facebook: '',
-    twitter: '',
-    instagram: '',
-    linkedin: ''
-  });
-
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    email: '',
-    phone: ''
-  });
 
   const [ticketTiers, setTicketTiers] = useState<Partial<TicketTier>[]>([
     { name: 'General Admission', price: 0, quantity: 100, benefits: 'Standard entry' }
@@ -181,11 +132,11 @@ const CreateEvent_IMPROVED: React.FC = () => {
       reader.readAsDataURL(file);
 
       // Upload to server
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'event');
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('type', 'event');
 
-      const response = await api.post('/upload', formData, {
+      const response = await api.post('/upload', uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -238,8 +189,6 @@ const CreateEvent_IMPROVED: React.FC = () => {
     setFormData({ ...formData, imageUrl: '' });
     addToast('Image removed', 'success');
   };
-
-  const generateId = () => Math.random().toString(36).substr(2, 9);
 
   const addTicketTier = () => {
     setTicketTiers([

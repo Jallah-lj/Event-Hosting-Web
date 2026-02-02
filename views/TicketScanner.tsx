@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
-import { Ticket, Event } from '../../types';
+import { Ticket, Event } from '../types';
 import { Button } from '../components/Button';
 import { CheckCircle, XCircle, RefreshCw, QrCode, Calendar, MapPin, Tag, User, AlertTriangle, Keyboard, Camera, Volume2, VolumeX, Zap, ZapOff, Clock, Search, VideoOff } from 'lucide-react';
 import { useToast } from '../components/Toast';

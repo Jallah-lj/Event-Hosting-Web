@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Event, Ticket, ViewState, TicketTier } from '../../types';
+import { Event, Ticket, ViewState, TicketTier } from '../types';
 import { Button } from '../components/Button';
 import { PaymentModal } from '../components/PaymentModal';
 import { MapPin, Calendar, Search, Check, ExternalLink, X, Plus, Minus, Ticket as TicketIcon, Heart, Sparkles, Filter, TrendingUp, Tag } from 'lucide-react';

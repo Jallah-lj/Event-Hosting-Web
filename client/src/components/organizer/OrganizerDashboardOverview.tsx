@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { Event, Ticket } from '../../types';
 import { DollarSign, Users, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardOverviewProps {
   events: Event[];

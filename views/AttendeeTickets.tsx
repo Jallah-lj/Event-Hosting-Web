@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ticket, Event } from '../../types';
+import { Ticket, Event } from '../types';
 import { Calendar, MapPin, Download, Mail, Tag, CheckCircle } from 'lucide-react';
 import { Button } from '../components/Button';
 import QRCode from 'react-qr-code';

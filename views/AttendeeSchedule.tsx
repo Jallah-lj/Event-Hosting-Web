@@ -1,5 +1,5 @@
 import React from 'react';
-import { Event, Ticket } from '../../types';
+import { Event, Ticket } from '../types';
 import { Button } from '../components/Button';
 import { Calendar, MapPin, Clock, MessageSquare, Bell, CheckCircle, FileText } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Event, Ticket, TicketTier, PromoCode, Referral, Broadcast, TeamMember, Transaction, ViewState } from '../../types';
+import { Event, Ticket, TicketTier, PromoCode, Referral, Broadcast, TeamMember, Transaction, ViewState } from '../types';
 import { Button } from '../components/Button';
 import { generateEventDescription, generateMarketingTagline, generateSocialCaptions, generateBroadcastContent, generateEventImage } from '../services/geminiService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
