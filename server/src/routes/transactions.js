@@ -23,7 +23,7 @@ router.get('/', authenticateToken, async (req, res) => {
       id: t.id,
       type: t.type,
       description: t.description,
-      amount: t.amount,
+      amount: parseFloat(t.amount),
       date: t.date,
       status: t.status,
       user: t.user_name,

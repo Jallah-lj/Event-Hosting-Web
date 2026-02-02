@@ -22,7 +22,7 @@ router.get('/', authenticateToken, requireRole('ORGANIZER', 'ADMIN'), async (req
       id: p.id,
       code: p.code,
       type: p.type,
-      value: p.value,
+      value: parseFloat(p.value),
       usage: p.usage_count,
       limit: p.usage_limit,
       status: p.status,
@@ -112,7 +112,7 @@ router.post('/validate', authenticateToken, async (req, res) => {
     res.json({
       valid: true,
       type: promo.type,
-      value: promo.value,
+      value: parseFloat(promo.value),
       code: promo.code
     });
   } catch (error) {

@@ -43,14 +43,14 @@ const Admin3DBarChart: React.FC = () => {
       const tickets = ticketsRes.data;
 
       // Calculate metrics
-      const totalUsers = users.length;
-      const activeUsers = users.filter((u: any) => u.status === 'Active').length;
-      const approvedEvents = events.filter((e: any) => e.status === 'APPROVED').length;
-      const totalRevenue = transactions
+      const totalUsers = (users || []).length;
+      const activeUsers = (users || []).filter((u: any) => u.status === 'Active').length;
+      const approvedEvents = (events || []).filter((e: any) => e.status === 'APPROVED').length;
+      const totalRevenue = (transactions || [])
         .filter((t: any) => t.type === 'SALE')
-        .reduce((sum: number, t: any) => sum + t.amount, 0);
-      const totalTickets = tickets.length;
-      const usedTickets = tickets.filter((t: any) => t.used === true || t.status === 'USED').length;
+        .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+      const totalTickets = (tickets || []).length;
+      const usedTickets = (tickets || []).filter((t: any) => t.used === true || t.status === 'USED').length;
 
       // Calculate engagement rate
       const engagementRate = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;

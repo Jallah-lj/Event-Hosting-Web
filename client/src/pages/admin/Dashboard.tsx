@@ -59,14 +59,14 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const totalRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
-  const pendingEvents = events.filter(e => e.status === 'PENDING');
+  const totalRevenue = (transactions || []).reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const pendingEvents = (events || []).filter(e => e && e.status === 'PENDING');
 
 
   const stats = [
     { label: 'Total Users', value: users.length, icon: Users, color: 'text-blue-500' },
     { label: 'Total Events', value: events.length, icon: Calendar, color: 'text-green-500' },
-    { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-yellow-500' },
+    { label: 'Total Revenue', value: `$${(Number(totalRevenue) || 0).toFixed(2)}`, icon: DollarSign, color: 'text-yellow-500' },
     { label: 'Pending Approval', value: pendingEvents.length, icon: Clock, color: 'text-orange-500' },
   ];
 
@@ -127,7 +127,7 @@ const AdminDashboard: React.FC = () => {
             </Link>
           </div>
           <div className="divide-y dark:divide-gray-700">
-            {pendingEvents.slice(0, 5).map(event => (
+            {(pendingEvents || []).slice(0, 5).map(event => (
               <div key={event.id} className="p-4 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg bg-gray-200 overflow-hidden shrink-0">
                   <img
@@ -220,14 +220,14 @@ const AdminDashboard: React.FC = () => {
             </Link>
           </div>
           <div className="divide-y dark:divide-gray-700">
-            {transactions.slice(0, 5).map(transaction => (
+            {(transactions || []).slice(0, 5).map(transaction => (
               <div key={transaction.id} className="p-4 flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-gray-900 dark:text-white">{transaction.userName}</div>
-                  <div className="text-sm text-gray-500">{transaction.eventTitle}</div>
+                  <div className="font-medium text-gray-900 dark:text-white">{transaction.user || transaction.userName || 'Unknown'}</div>
+                  <div className="text-sm text-gray-500">{transaction.event || transaction.eventTitle || 'Platform'}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-green-600">+${transaction.amount.toFixed(2)}</div>
+                  <div className="font-bold text-green-600">+${(Number(transaction.amount) || 0).toFixed(2)}</div>
                   <div className="text-xs text-gray-400">
                     {new Date(transaction.date).toLocaleDateString()}
                   </div>

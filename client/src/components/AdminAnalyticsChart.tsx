@@ -28,19 +28,19 @@ const AdminAnalyticsChart: React.FC = () => {
         try {
             // Fetch all necessary data
             const [users, events, transactions] = await Promise.all([
-                api.get('/admin/users'),
+                api.get('/users'),
                 api.get('/events'),
                 api.get('/transactions')
             ]);
 
             // Calculate metrics
-            const totalRevenue = transactions.data
+            const totalRevenue = (transactions.data || [])
                 .filter((t: any) => t.type === 'SALE')
-                .reduce((sum: number, t: any) => sum + t.amount, 0);
+                .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
 
-            const totalUsers = users.data.length;
-            const totalEvents = events.data.length;
-            const activeEvents = events.data.filter((e: any) => e.status === 'APPROVED').length;
+            const totalUsers = (users.data || []).length;
+            const totalEvents = (events.data || []).length;
+            const activeEvents = (events.data || []).filter((e: any) => e.status === 'APPROVED').length;
 
             // Calculate growth (mock data for now - would need historical data)
             const revenueGrowth = 12.5;
@@ -48,13 +48,13 @@ const AdminAnalyticsChart: React.FC = () => {
             const eventGrowth = 15.7;
 
             // Revenue by month
-            const revenueByMonth = calculateRevenueByMonth(transactions.data);
+            const revenueByMonth = calculateRevenueByMonth(transactions.data || []);
 
             // Users by role
-            const usersByRole = calculateUsersByRole(users.data);
+            const usersByRole = calculateUsersByRole(users.data || []);
 
             // Events by category
-            const eventsByCategory = calculateEventsByCategory(events.data);
+            const eventsByCategory = calculateEventsByCategory(events.data || []);
 
             setData({
                 totalRevenue,
@@ -78,7 +78,7 @@ const AdminAnalyticsChart: React.FC = () => {
     const calculateRevenueByMonth = (transactions: any[]) => {
         const monthlyData: { [key: string]: { revenue: number; sales: number } } = {};
 
-        transactions
+        (transactions || [])
             .filter(t => t.type === 'SALE')
             .forEach(t => {
                 const date = new Date(t.date);
@@ -87,7 +87,7 @@ const AdminAnalyticsChart: React.FC = () => {
                 if (!monthlyData[monthKey]) {
                     monthlyData[monthKey] = { revenue: 0, sales: 0 };
                 }
-                monthlyData[monthKey].revenue += t.amount;
+                monthlyData[monthKey].revenue += (Number(t.amount) || 0);
                 monthlyData[monthKey].sales += 1;
             });
 
@@ -102,16 +102,20 @@ const AdminAnalyticsChart: React.FC = () => {
 
     const calculateUsersByRole = (users: any[]) => {
         const roleCounts: { [key: string]: number } = {};
-        users.forEach(u => {
-            roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+        (users || []).forEach(u => {
+            if (u && u.role) {
+                roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+            }
         });
         return Object.entries(roleCounts).map(([role, count]) => ({ role, count }));
     };
 
     const calculateEventsByCategory = (events: any[]) => {
         const categoryCounts: { [key: string]: number } = {};
-        events.forEach(e => {
-            categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+        (events || []).forEach(e => {
+            if (e && e.category) {
+                categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+            }
         });
         return Object.entries(categoryCounts).map(([category, count]) => ({ category, count }));
     };
@@ -129,7 +133,7 @@ const AdminAnalyticsChart: React.FC = () => {
 
     if (!data) return null;
 
-    const maxRevenue = Math.max(...data.revenueByMonth.map(d => d.revenue));
+    const maxRevenue = Math.max(...data.revenueByMonth.map(d => d.revenue), 1);
 
     return (
         <div className="space-y-6">
